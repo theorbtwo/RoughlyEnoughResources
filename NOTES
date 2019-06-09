@@ -1,0 +1,4 @@
+REI stuff:
+https://github.com/shedaniel/RoughlyEnoughItems/wiki/Creating-a-REI-Plugin-(1.14-Fabric)
+entrypoint:
+ https://github.com/shedaniel/RoughlyEnoughItems/blob/1.14/src/main/java/me/shedaniel/rei/plugin/DefaultPlugin.java

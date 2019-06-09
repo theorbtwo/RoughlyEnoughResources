@@ -1,0 +1,4 @@
+public class WorldGenDisplay implements RecipeDisplay<WorldGenRecipie> {
+    private WorldGenRecipie recipie;
+    
+}

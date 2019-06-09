@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "id": "modid",
+  "id": "roughlyenoughresources",
   "version": "${version}",
 
   "name": "Example Mod",
@@ -19,11 +19,14 @@
   "environment": "*",
   "entrypoints": {
     "main": [
-      "net.fabricmc.example.ExampleMod"
-    ]
+      "uk.me.desert_island.rer.RoughlyEnoughResources"
+    ],
+      "rei_plugins": [
+	  "uk.me.desert_island.rer.rei_stuff.PluginEntry"
+      ],
   },
   "mixins": [
-    "modid.mixins.json"
+    "roughlyenoughresources.mixins.json"
   ],
 
   "depends": {

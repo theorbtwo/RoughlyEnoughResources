@@ -1,11 +1,11 @@
 {
   "required": true,
-  "package": "net.fabricmc.example.mixin",
+  "package": "uk.me.desert_island.rer.mixin",
   "compatibilityLevel": "JAVA_8",
   "mixins": [
+    "ChunkGeneratorMixin"
   ],
   "client": [
-    "ExampleMixin"
   ],
   "injectors": {
     "defaultRequire": 1

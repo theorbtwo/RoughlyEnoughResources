@@ -1,0 +1,62 @@
+package uk.me.desert_island.rer.mixin;
+
+import net.minecraft.block.BlockState;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.ChunkRegion;
+import net.minecraft.world.gen.chunk.ChunkGenerator;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+@Mixin(ChunkGenerator.class)
+public class ChunkGeneratorMixin {
+	private static Map<Integer, Map<BlockState, Integer>> state_counts_at_level = new HashMap<Integer, Map<BlockState, Integer>>();
+	private static Map<Integer, Integer> total_counts_at_level = new HashMap<Integer, Integer>();
+
+	@Inject(at = @At("RETURN"), method = "generateFeatures(Lnet/minecraft/world/ChunkRegion;)V")
+	private void generateFeatures(ChunkRegion region, CallbackInfo info) {
+		System.out.println("This line is printed by an example mod mixin!");
+
+		int cent_chunk_x = region.getCenterChunkX();
+		int cent_chunk_z = region.getCenterChunkZ();
+		int cent_block_x = cent_chunk_x * 16;
+		int cent_block_z = cent_chunk_z * 16;
+
+		for (int y=0; y < 128; y++) {
+			/* This could probably be raised up to a constructor? */
+			if (!total_counts_at_level.containsKey(y)) {
+				total_counts_at_level.put(y, 1);
+			} else {
+				total_counts_at_level.put(y, total_counts_at_level.get(y) + 1);
+			}
+
+			if (!state_counts_at_level.containsKey(y)) {
+				state_counts_at_level.put(y, new HashMap<BlockState, Integer>());
+			}
+			Map<BlockState, Integer> state_counts_at_this_level = state_counts_at_level.get(y);
+
+			for (int x=0; x < cent_block_x + 8; x++) {
+				/* use heightmap or something instead of hardcoding this? */
+				for (int z=0; z < cent_block_z + 8; z++) {
+
+					BlockState state = region.getBlockState(new BlockPos(x, y, z));
+
+					if (!state_counts_at_this_level.containsKey(state)) {
+						state_counts_at_this_level.put(state, 1);
+					} else {
+						state_counts_at_this_level.put(state, state_counts_at_this_level.get(state) + 1);
+					}
+
+					System.out.printf("(%d, %d, %d) is %s (count %d)\n", x, y, z, state.toString(), state_counts_at_this_level.get(state));
+				}
+			}
+		}
+
+		System.out.println();
+	}
+}

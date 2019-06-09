@@ -22,4 +22,6 @@ bin/
 
 # fabric
 
-run/
+run/*~
+*~
+run

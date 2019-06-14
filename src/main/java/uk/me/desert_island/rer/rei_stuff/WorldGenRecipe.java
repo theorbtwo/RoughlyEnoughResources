@@ -11,6 +11,10 @@ import net.minecraft.world.World;
 public class WorldGenRecipe implements Recipe<Inventory> {
     public ItemStack output;
 
+    public WorldGenRecipe(ItemStack output) {
+        this.output = output;
+    }
+
     @Override
     public ItemStack craft(Inventory arg0) {
         return null;

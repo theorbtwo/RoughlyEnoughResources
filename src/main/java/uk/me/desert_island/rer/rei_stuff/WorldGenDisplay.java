@@ -66,6 +66,8 @@ public class WorldGenDisplay implements RecipeDisplay<WorldGenRecipe> {
 
 	@Override
 	public Identifier getRecipeCategory() {
-		return null;
+		return WorldGenCategory.CATEGORY_ID;
 	}
+
+	
 }

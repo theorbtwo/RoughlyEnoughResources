@@ -26,6 +26,8 @@ public class ChunkGeneratorMixin {
 	int cent_chunk_z = region.getCenterChunkZ();
 	int cent_block_x = cent_chunk_x * 16;
 	int cent_block_z = cent_chunk_z * 16;
+
+	System.out.printf("generateFeatures for block %d,%d\n", cent_block_x, cent_block_z);
 	
 	for (int y=0; y < 128; y++) {
 	    /* This could probably be raised up to a constructor? */
@@ -58,13 +60,13 @@ public class ChunkGeneratorMixin {
 	
 	for (int y=0; y < 128; y++) {
 	    int total_count = total_counts_at_level.get(y);
-	    System.out.printf("y=%d\n", y);
+	    //System.out.printf("y=%d\n", y);
 	    
 	    
 	    Map<Block, Integer> block_counts_at_this_level = block_counts_at_level.get(y);
 	    for (Block block : block_counts_at_this_level.keySet()) {
 		int count = block_counts_at_this_level.get(block);
-		System.out.printf("y=%3d %8.2g%%: %s\n", y, (double)count/total_count * 100.0, block);
+		//System.out.printf("y=%3d %8.2g%%: %s\n", y, (double)count/total_count * 100.0, block);
 	    }
 	}
 	

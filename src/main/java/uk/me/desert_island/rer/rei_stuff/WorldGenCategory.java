@@ -14,7 +14,8 @@ public class WorldGenCategory implements RecipeCategory<WorldGenDisplay> {
 
     @Override
     public String getCategoryName() {
-	return I18n.translate("category.rer.worldgen");
-    }
+	//return I18n.translate("category.rer.worldgen");
+	return "category.rer.worldgen";
+}
     
 }

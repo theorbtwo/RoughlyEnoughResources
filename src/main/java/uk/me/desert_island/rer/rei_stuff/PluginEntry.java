@@ -3,6 +3,7 @@ package uk.me.desert_island.rer.rei_stuff;
 import me.shedaniel.rei.api.REIPluginEntry;
 import me.shedaniel.rei.api.RecipeHelper;
 import net.minecraft.block.Block;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
@@ -27,7 +28,9 @@ public class PluginEntry implements REIPluginEntry {
         System.out.printf("In registerRecipeDisplays\n");
         for (Block block : Registry.BLOCK) {
             System.out.printf("block=%s\n", block);
-            if (block.asItem() != null) {
+            Item item = block.asItem();
+            
+            if (item != null && Block.getBlockFromItem(item) == block) {
                 System.out.printf("registerDisplay for WorldGenDisplay block=%s", block);
                 WorldGenRecipe r = new WorldGenRecipe(new ItemStack(block.asItem()));
                 recipeHelper.registerDisplay(WorldGenCategory.CATEGORY_ID, new WorldGenDisplay(r));

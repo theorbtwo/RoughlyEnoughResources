@@ -27,11 +27,15 @@ public class PluginEntry implements REIPluginEntry {
     public void registerRecipeDisplays(RecipeHelper recipeHelper) {
         System.out.printf("In registerRecipeDisplays\n");
         for (Block block : Registry.BLOCK) {
-            System.out.printf("block=%s\n", block);
+            //System.out.printf("block=%s\n", block);
             Item item = block.asItem();
             
-            if (item != null && Block.getBlockFromItem(item) == block) {
-                System.out.printf("registerDisplay for WorldGenDisplay block=%s", block);
+            if (item == null) {
+                System.out.printf("block %s cannot be converted to item?\n");
+            } else if (Block.getBlockFromItem(item) != block) {
+                System.out.printf("block %s to item %s to block %s\n", block, item, Block.getBlockFromItem(item));
+            } else {
+                //System.out.printf("registerDisplay for WorldGenDisplay block=%s", block);
                 WorldGenRecipe r = new WorldGenRecipe(new ItemStack(block.asItem()));
                 recipeHelper.registerDisplay(WorldGenCategory.CATEGORY_ID, new WorldGenDisplay(r));
             }

@@ -1,11 +1,12 @@
 package uk.me.desert_island.rer;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import net.fabricmc.fabric.api.util.NbtType;
 import net.minecraft.block.Block;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.PersistentState;
 
@@ -20,8 +21,8 @@ public class WorldGenState extends PersistentState {
         }
     }
 
-    public static Map<Block, Map<Integer, Long>> level_counts_for_block = new HashMap<Block, Map<Integer, Long>>();
-    public static Map<Integer, Long> total_counts_at_level = new HashMap<Integer, Long>(128);
+    public static Map<Block, Map<Integer, Long>> level_counts_for_block = new ConcurrentHashMap<Block, Map<Integer, Long>>();
+    public static Map<Integer, Long> total_counts_at_level = new ConcurrentHashMap<Integer, Long>(128);
     public final int CURRENT_VERSION = 0;
 
     /* 
@@ -31,7 +32,7 @@ public class WorldGenState extends PersistentState {
      */
 
     @Override
-    public void fromTag(CompoundTag root) {
+    public synchronized void fromTag(CompoundTag root) {
         int version;
         if (!root.containsKey("Version", NbtType.INT)) {
             System.out.println("Invalid save data. Expected a Version, found no Version, throwing out existing data in a huff.");
@@ -48,32 +49,47 @@ public class WorldGenState extends PersistentState {
         level_counts_for_block.clear();
         total_counts_at_level.clear();
 
-        /*
         long[] tcal_array = root.getLongArray("total_counts_at_level");
-        for (Integer i = 0; i < tcal_array.length; i++) {
+        for (int i = 0; i < tcal_array.length; i++) {
             total_counts_at_level.put(i, tcal_array[i]);
         }
 
-        CompoundTag bcal_ctag = root.getCompound("level_counts_for_block");
-        for (String block_id : bcal_ctag.getKeys()) {
-            level_counts_for_block.put(Registry.BLOCK.get());
+        CompoundTag lcfb_tag = root.getCompound("level_counts_for_block");
+        for (String block_id_str : lcfb_tag.getKeys()) {
+            Block block = Registry.BLOCK.get(new Identifier(block_id_str));
+            level_counts_for_block.put(block, new ConcurrentHashMap<Integer, Long>(128));
+            Map<Integer, Long> this_lcfb = level_counts_for_block.get(block);
+            long this_lcfb_tag[] = lcfb_tag.getLongArray(block_id_str);
+            for (int i=0; i<128; i++) {
+                this_lcfb.put(i, this_lcfb_tag[i]);
+            }
+
         }
-        */
     }
 
     @Override
-    public CompoundTag toTag(CompoundTag root) {
+    public synchronized CompoundTag toTag(CompoundTag root) {
+        System.out.printf("toTag\n");
         root.putInt("Version", 0);
         
-
-        /*
-        for (String entity_id : rankings.keySet()) {
-            CompoundTag entity_tag = new CompoundTag();
-            entity_tag.putDouble("rank", rankings.get(entity_id));
-            entities.put(entity_id, entity_tag);
+        long tcal_tag[] = new long[128];
+        for (int i=0; i<128; i++) {
+            tcal_tag[i] = total_counts_at_level.get(i);
         }
-        */
+        root.putLongArray("total_counts_at_level", tcal_tag);
 
+        CompoundTag lcfb_tag = new CompoundTag();
+        root.put("level_counts_for_block", lcfb_tag);
+        for (Block block : level_counts_for_block.keySet()) {
+            Map<Integer, Long> this_lcfb_map = level_counts_for_block.get(block);
+            long this_lcfb_array[] = new long[128];
+            for (int i=0; i<128; i++) {
+                this_lcfb_array[i] = this_lcfb_map.getOrDefault(i, (long) 0);
+            }
+            lcfb_tag.putLongArray(Registry.BLOCK.getId(block).toString(), this_lcfb_array);
+        }
+
+        System.out.printf("toTag done\n");
         return root;
     }
 
@@ -89,15 +105,15 @@ public class WorldGenState extends PersistentState {
             return 0;
         }
 
-        long block_count = this_lcfb.get(y);
+        double block_count = this_lcfb.get(y);
 
-        long total_count = total_counts_at_level.getOrDefault(y, (long) 1);
+        double total_count = total_counts_at_level.getOrDefault(y, (long) 1);
 
         if (total_count == 0) {
             return 0;
         }
 
-        return (double)block_count/(double)total_count;
+        return block_count/total_count;
     }
 
 	public static double get_max_portion(Block block) {

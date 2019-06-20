@@ -3,14 +3,14 @@
   "id": "roughlyenoughresources",
   "version": "${version}",
   
-  "name": "Example Mod",
-  "description": "This is an example description! Tell everyone what your mod is about!",
+  "name": "Roughly Enough Resources",
+  "description": "This mod extends Just Enough Items to show you at what heights in the world you can find various blocks.",
   "authors": [
-    "Me!"
+    "theorbtwo"
   ],
   "contact": {
     "homepage": "https://fabricmc.net/",
-    "sources": "https://github.com/FabricMC/fabric-example-mod"
+    "sources": "https://github.com/theorbtwo/rer"
   },
   
   "license": "CC0-1.0",
@@ -34,6 +34,5 @@
     "fabric": "*"
   },
   "suggests": {
-    "flamingo": "*"
   }
 }

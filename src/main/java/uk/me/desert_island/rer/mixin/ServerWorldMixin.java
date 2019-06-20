@@ -15,6 +15,8 @@ import net.minecraft.world.chunk.ChunkManager;
 import net.minecraft.world.dimension.Dimension;
 import net.minecraft.world.dimension.DimensionType;
 import net.minecraft.world.level.LevelProperties;
+
+import org.apache.logging.log4j.LogManager;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -36,6 +38,7 @@ public abstract class ServerWorldMixin extends World {
         method = "<init>(Lnet/minecraft/server/MinecraftServer;Ljava/util/concurrent/Executor;Lnet/minecraft/world/WorldSaveHandler;Lnet/minecraft/world/level/LevelProperties;Lnet/minecraft/world/dimension/DimensionType;Lnet/minecraft/util/profiler/Profiler;Lnet/minecraft/server/WorldGenerationProgressListener;)V"
     )
     private void constructor(MinecraftServer server, Executor executor, WorldSaveHandler oldWorldSaveHandler, LevelProperties levelProperties, DimensionType dimensionType, Profiler profiler, WorldGenerationProgressListener worldGenerationProgressListener, CallbackInfo ci) {
+        LogManager.getFormatterLogger("rer-swm").info("SWM constructor");
         PersistentStateManager persistentStateManager = ((ServerWorld) (Object) this).getPersistentStateManager();
         persistentStateManager.getOrCreate(() -> new WorldGenState(PERSISTENT_STATE_KEY), PERSISTENT_STATE_KEY);
     }

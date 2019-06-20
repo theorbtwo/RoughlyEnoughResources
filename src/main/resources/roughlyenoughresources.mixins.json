@@ -3,7 +3,8 @@
   "package": "uk.me.desert_island.rer.mixin",
   "compatibilityLevel": "JAVA_8",
   "mixins": [
-    "ChunkGeneratorMixin"
+    "ChunkGeneratorMixin",
+    "ServerWorldMixin"
   ],
   "client": [
   ],

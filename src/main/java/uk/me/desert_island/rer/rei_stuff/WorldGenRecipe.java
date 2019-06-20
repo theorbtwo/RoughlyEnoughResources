@@ -36,12 +36,12 @@ public class WorldGenRecipe implements Recipe<Inventory> {
     }
 
     @Override
-    public RecipeSerializer getSerializer() {
+    public RecipeSerializer<?> getSerializer() {
         return null;
     }
 
     @Override
-    public RecipeType getType() {
+    public RecipeType<?> getType() {
         return null;
     }
 

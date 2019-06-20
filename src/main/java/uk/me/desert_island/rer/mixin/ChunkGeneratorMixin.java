@@ -2,9 +2,7 @@ package uk.me.desert_island.rer.mixin;
 
 import net.minecraft.block.Block;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.registry.Registry;
 import net.minecraft.world.ChunkRegion;
-import net.minecraft.world.dimension.Dimension;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
 import uk.me.desert_island.rer.WorldGenState;
 

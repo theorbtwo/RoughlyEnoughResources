@@ -29,7 +29,7 @@ public class WorldGenDisplay implements RecipeDisplay<WorldGenRecipe> {
 	@Override
 	public List<ItemStack> getOutput() {
 		List<ItemStack> list = new ArrayList<ItemStack>(1);
-		list.add(recipe.output);
+		list.add(recipe.output_stack);
 		return list;
 	}
 

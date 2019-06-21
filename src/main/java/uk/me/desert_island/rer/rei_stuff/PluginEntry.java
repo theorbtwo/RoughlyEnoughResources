@@ -10,6 +10,7 @@ import net.minecraft.util.registry.Registry;
 import uk.me.desert_island.rer.rei_stuff.WorldGenCategory;
 import uk.me.desert_island.rer.rei_stuff.WorldGenDisplay;
 import uk.me.desert_island.rer.rei_stuff.WorldGenRecipe;
+import uk.me.desert_island.rer.RERUtils;
 
 public class PluginEntry implements REIPluginEntry {
     public static final Identifier PLUGIN_ID = new Identifier("roughlyenoughresources", "rer_plugin");
@@ -28,17 +29,10 @@ public class PluginEntry implements REIPluginEntry {
         System.out.printf("In registerRecipeDisplays\n");
         for (Block block : Registry.BLOCK) {
             //System.out.printf("block=%s\n", block);
-            Item item = block.asItem();
-            
-            if (item == null) {
-                System.out.printf("block %s cannot be converted to item?\n");
-            } else if (Block.getBlockFromItem(item) != block) {
-                System.out.printf("block %s to item %s to block %s\n", block, item, Block.getBlockFromItem(item));
-            } else {
-                //System.out.printf("registerDisplay for WorldGenDisplay block=%s", block);
-                WorldGenRecipe r = new WorldGenRecipe(new ItemStack(block.asItem()));
-                recipeHelper.registerDisplay(WorldGenCategory.CATEGORY_ID, new WorldGenDisplay(r));
-            }
+            //System.out.printf("registerDisplay for WorldGenDisplay block=%s", block);
+
+            WorldGenRecipe r = new WorldGenRecipe(RERUtils.Block_to_ItemStack(block), block);
+            recipeHelper.registerDisplay(WorldGenCategory.CATEGORY_ID, new WorldGenDisplay(r));
         }
     }
 }

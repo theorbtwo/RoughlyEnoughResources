@@ -1,12 +1,17 @@
 package uk.me.desert_island.rer.rei_stuff;
 
+import java.awt.Point;
 import java.awt.Rectangle;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Supplier;
 
 import com.mojang.blaze3d.platform.GlStateManager;
 
-import me.shedaniel.rei.api.*;
+import me.shedaniel.rei.api.RecipeCategory;
+import me.shedaniel.rei.api.Renderable;
+import me.shedaniel.rei.api.Renderer;
+import me.shedaniel.rei.gui.widget.LabelWidget;
 import me.shedaniel.rei.gui.widget.RecipeBaseWidget;
 import me.shedaniel.rei.gui.widget.SlotWidget;
 import me.shedaniel.rei.gui.widget.Widget;
@@ -17,11 +22,8 @@ import net.minecraft.client.render.GuiLighting;
 import net.minecraft.client.resource.language.I18n;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.registry.Registry;
 import uk.me.desert_island.rer.WorldGenState;
-
-import java.awt.*;
-import java.util.LinkedList;
-import java.util.Arrays;
 
 
 
@@ -49,13 +51,16 @@ public class WorldGenCategory implements RecipeCategory<WorldGenDisplay> {
     public List<Widget> setupDisplay(Supplier<WorldGenDisplay> recipeDisplaySupplier, Rectangle bounds) {
         final WorldGenDisplay recipeDisplay = recipeDisplaySupplier.get();
         WorldGenRecipe recipe = recipeDisplay.getRecipe().get();
-        Block block = Block.getBlockFromItem(recipe.output.getItem());
-        
+        Block block = recipe.output_block;
+
         Point startPoint = new Point((int) bounds.getMinX()+2, (int) bounds.getMinY()+3);
         int graph_height = 60;
         double max_portion = WorldGenState.get_max_portion(block);
         
-        List<Widget> widgets = new LinkedList<>(Arrays.asList(new RecipeBaseWidget(bounds) {
+        List<Widget> widgets = new LinkedList<>();
+        LeftLabelWidget y_widget = new LeftLabelWidget(startPoint.x, startPoint.y + 3, "");
+        LeftLabelWidget pct_widget = new LeftLabelWidget(startPoint.x, startPoint.y + 13, "");
+        widgets.add(new RecipeBaseWidget(bounds) {
             
             @Override
             public void render(int mouseX, int mouseY, float delta) {
@@ -65,6 +70,16 @@ public class WorldGenCategory implements RecipeCategory<WorldGenDisplay> {
                 MinecraftClient.getInstance().getTextureManager().bindTexture(DISPLAY_TEXTURE);
                 //blit(startPoint.x, startPoint.y, 0, 60, 103, 59);
                 
+                int mouse_height = mouseX - startPoint.x;
+                if (mouse_height < 0 || mouse_height > 128) {
+                    y_widget.text = "";
+                    pct_widget.text = "";
+                } else {
+                    y_widget.text = String.format("%d", mouse_height);
+                    pct_widget.text = String.format("%f%%", WorldGenState.get_portion_at_height(block, mouse_height)*100);
+                }
+
+
                 for (int height=0; height<128; height++) {
                     double portion = WorldGenState.get_portion_at_height(block, height);
                     double rel_portion;
@@ -90,11 +105,14 @@ public class WorldGenCategory implements RecipeCategory<WorldGenDisplay> {
                 }
                 
             }
-        }));
+        });
         widgets.add(new SlotWidget(
-        (int)(bounds.getMaxX() - (16+4)), (int)bounds.getMinY()+4, 
-        recipe.output, false, true
+            (int)(bounds.getMaxX() - (16+4)), (int)bounds.getMinY()+4, 
+            recipe.output_stack, false, true
         ));
+        widgets.add(new LabelWidget((int)bounds.getCenterX(), (int)bounds.getMaxY()-(3+8+2), Registry.BLOCK.getId(block).toString()));
+        widgets.add(pct_widget);
+        widgets.add(y_widget);
         return widgets;
     }
 }

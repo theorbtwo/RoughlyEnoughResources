@@ -1,5 +1,6 @@
 package uk.me.desert_island.rer.rei_stuff;
 
+import net.minecraft.block.Block;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.recipe.Recipe;
@@ -9,10 +10,12 @@ import net.minecraft.util.Identifier;
 import net.minecraft.world.World;
 
 public class WorldGenRecipe implements Recipe<Inventory> {
-    public ItemStack output;
+    public ItemStack output_stack;
+    public Block output_block;
 
-    public WorldGenRecipe(ItemStack output) {
-        this.output = output;
+    public WorldGenRecipe(ItemStack stack, Block block) {
+        this.output_stack = stack;
+        this.output_block = block;
     }
 
     @Override
@@ -32,7 +35,7 @@ public class WorldGenRecipe implements Recipe<Inventory> {
 
     @Override
     public ItemStack getOutput() {
-        return output;
+        return output_stack;
     }
 
     @Override

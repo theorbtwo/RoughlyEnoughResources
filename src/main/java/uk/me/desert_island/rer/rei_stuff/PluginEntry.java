@@ -3,13 +3,8 @@ package uk.me.desert_island.rer.rei_stuff;
 import me.shedaniel.rei.api.REIPluginEntry;
 import me.shedaniel.rei.api.RecipeHelper;
 import net.minecraft.block.Block;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
-import uk.me.desert_island.rer.rei_stuff.WorldGenCategory;
-import uk.me.desert_island.rer.rei_stuff.WorldGenDisplay;
-import uk.me.desert_island.rer.rei_stuff.WorldGenRecipe;
 import uk.me.desert_island.rer.RERUtils;
 
 public class PluginEntry implements REIPluginEntry {

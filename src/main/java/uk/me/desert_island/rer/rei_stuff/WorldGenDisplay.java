@@ -23,7 +23,7 @@ public class WorldGenDisplay implements RecipeDisplay<WorldGenRecipe> {
 
 	@Override
 	public List<List<ItemStack>> getInput() {
-		return null;
+		return new ArrayList<List<ItemStack>>();
 	}
 
 	@Override

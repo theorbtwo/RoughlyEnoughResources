@@ -30,7 +30,8 @@ public class WorldGenRecipe implements Recipe<Inventory> {
 
     @Override
     public Identifier getId() {
-        return null;
+        // this must be nonnull, or Arcane Magic null-pointer-exceptions whenever you try to look at a rer recipe with arcane magic installed.
+        return new Identifier("rer", "worldgenrecipe");
     }
 
     @Override

@@ -16,6 +16,7 @@ minecraft {
 repositories {
     maven { url "https://minecraft.curseforge.com/api/maven" }
     maven { url "https://tehnut.info/maven/" }
+	maven { url 'http://maven.modmuss50.me' }
 }
 
 
@@ -32,6 +33,14 @@ dependencies {
 	// You may need to force-disable transitiveness on them.
 	
     modCompile "me.shedaniel:RoughlyEnoughItems:2.9.1+build.122"
+
+	// Testing purposes: I think there's some sort of conflict?
+    modCompile "arcanemagic:ArcaneMagic:1.0.0:beta3"
+
+    modCompile "crochet:Crochet:${project.crochet_version}"
+	modCompile "cutscene-api:CutsceneAPI:${project.cutscene_api_version}"
+	modCompile "multiblock-api:MultiBlockAPI:${project.multiblock_api_version}"
+	modCompile "io.github.prospector.silk:SilkAPI:${project.silk_version}"
 }
 
 processResources {

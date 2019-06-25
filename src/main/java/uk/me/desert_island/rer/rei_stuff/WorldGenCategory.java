@@ -23,6 +23,7 @@ import net.minecraft.client.resource.language.I18n;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
+import net.minecraft.world.dimension.DimensionType;
 import uk.me.desert_island.rer.WorldGenState;
 
 
@@ -54,8 +55,6 @@ public class WorldGenCategory implements RecipeCategory<WorldGenDisplay> {
         Block block = recipe.output_block;
 
         Point startPoint = new Point((int) bounds.getMinX()+2, (int) bounds.getMinY()+3);
-        int graph_height = 60;
-        double max_portion = WorldGenState.get_max_portion(block);
         
         List<Widget> widgets = new LinkedList<>();
         LeftLabelWidget y_widget = new LeftLabelWidget(startPoint.x, startPoint.y + 3, "");
@@ -64,6 +63,11 @@ public class WorldGenCategory implements RecipeCategory<WorldGenDisplay> {
             
             @Override
             public void render(int mouseX, int mouseY, float delta) {
+                WorldGenState wgstate = WorldGenState.byDimension(DimensionType.OVERWORLD);
+
+                int graph_height = 60;
+                double max_portion = wgstate.get_max_portion(block);
+
                 super.render(mouseX, mouseY, delta);
                 GlStateManager.color4f(1.0F, 1.0F, 1.0F, 1.0F);
                 GuiLighting.disable();
@@ -76,12 +80,12 @@ public class WorldGenCategory implements RecipeCategory<WorldGenDisplay> {
                     pct_widget.text = "";
                 } else {
                     y_widget.text = String.format("%d", mouse_height);
-                    pct_widget.text = String.format("%f%%", WorldGenState.get_portion_at_height(block, mouse_height)*100);
+                    pct_widget.text = String.format("%f%%", wgstate.get_portion_at_height(block, mouse_height)*100);
                 }
 
 
                 for (int height=0; height<128; height++) {
-                    double portion = WorldGenState.get_portion_at_height(block, height);
+                    double portion = wgstate.get_portion_at_height(block, height);
                     double rel_portion;
                     if (max_portion == 0) {
                         rel_portion = 0;

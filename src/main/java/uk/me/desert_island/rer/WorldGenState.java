@@ -1,7 +1,11 @@
 package uk.me.desert_island.rer;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import net.fabricmc.fabric.api.util.NbtType;
 import net.minecraft.block.Block;
@@ -9,20 +13,41 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.PersistentState;
+import net.minecraft.world.PersistentStateManager;
+import net.minecraft.world.dimension.Dimension;
+import net.minecraft.world.dimension.DimensionType;
 
 public class WorldGenState extends PersistentState {
-    public static WorldGenState GLOBAL_WORLD_GEN_STATE;
+    public static Map<DimensionType, PersistentStateManager> psm_map = new HashMap<>();
+    private static final Logger LOGGER = LogManager.getFormatterLogger("rer-wgs");
+
+    public static void register_psm(PersistentStateManager psm, DimensionType dt) {
+        if (psm_map.containsKey(dt)) {
+            LOGGER.warn("Registering psm %s for already known dt %s?", psm, dt);
+        }
+        psm_map.put(dt, psm);
+    }
+
+    public static WorldGenState byDimension(Dimension dim) {
+        return byDimension(dim.getType());
+    }
+
+    public static WorldGenState byDimension(DimensionType dim) {
+        String name = "rer_worldgen";
+        System.out.printf("WorldGenState byDimension %s\n", dim);
+        PersistentStateManager psm = psm_map.get(dim);
+        WorldGenState ret = psm.getOrCreate(() -> new WorldGenState(name), name);
+        System.out.printf("Now %s\n", ret);
+        return ret;
+    }
+
 
     public WorldGenState(String string_1) {
         super(string_1);
-
-        if (GLOBAL_WORLD_GEN_STATE == null) {
-            GLOBAL_WORLD_GEN_STATE = this;
-        }
     }
 
-    public static Map<Block, Map<Integer, Long>> level_counts_for_block = new ConcurrentHashMap<Block, Map<Integer, Long>>();
-    public static Map<Integer, Long> total_counts_at_level = new ConcurrentHashMap<Integer, Long>(128);
+    public Map<Block, Map<Integer, Long>> level_counts_for_block = new ConcurrentHashMap<Block, Map<Integer, Long>>();
+    public Map<Integer, Long> total_counts_at_level = new ConcurrentHashMap<Integer, Long>(128);
     public final int CURRENT_VERSION = 0;
 
     /* 
@@ -32,7 +57,7 @@ public class WorldGenState extends PersistentState {
      */
 
     @Override
-    public synchronized void fromTag(CompoundTag root) {
+    public void fromTag(CompoundTag root) {
         int version;
         if (!root.containsKey("Version", NbtType.INT)) {
             System.out.println("Invalid save data. Expected a Version, found no Version, throwing out existing data in a huff.");
@@ -68,7 +93,7 @@ public class WorldGenState extends PersistentState {
     }
 
     @Override
-    public synchronized CompoundTag toTag(CompoundTag root) {
+    public CompoundTag toTag(CompoundTag root) {
         System.out.printf("toTag\n");
         root.putInt("Version", 0);
         
@@ -94,7 +119,7 @@ public class WorldGenState extends PersistentState {
     }
 
     // Returns 0 if the real result is undefined.
-    public static double get_portion_at_height(Block block, int y) {
+    public double get_portion_at_height(Block block, int y) {
         Map<Integer, Long> this_lcfb = level_counts_for_block.getOrDefault(block, null);
         
         if (this_lcfb == null) {
@@ -116,7 +141,7 @@ public class WorldGenState extends PersistentState {
         return block_count/total_count;
     }
 
-	public static double get_max_portion(Block block) {
+	public double get_max_portion(Block block) {
         double max_portion=0.0;
 
         for (int y=0; y<128; y++) {

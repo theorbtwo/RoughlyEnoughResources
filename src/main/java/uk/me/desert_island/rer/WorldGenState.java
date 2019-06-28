@@ -34,10 +34,10 @@ public class WorldGenState extends PersistentState {
 
     public static WorldGenState byDimension(DimensionType dim) {
         String name = "rer_worldgen";
-        System.out.printf("WorldGenState byDimension %s\n", dim);
+        //System.out.printf("WorldGenState byDimension %s\n", dim);
         PersistentStateManager psm = psm_map.get(dim);
         WorldGenState ret = psm.getOrCreate(() -> new WorldGenState(name), name);
-        System.out.printf("Now %s\n", ret);
+        //System.out.printf("Now %s\n", ret);
         return ret;
     }
 
@@ -94,7 +94,7 @@ public class WorldGenState extends PersistentState {
 
     @Override
     public CompoundTag toTag(CompoundTag root) {
-        System.out.printf("toTag\n");
+        //System.out.printf("toTag\n");
         root.putInt("Version", 0);
         
         long tcal_tag[] = new long[128];
@@ -114,7 +114,7 @@ public class WorldGenState extends PersistentState {
             lcfb_tag.putLongArray(Registry.BLOCK.getId(block).toString(), this_lcfb_array);
         }
 
-        System.out.printf("toTag done\n");
+        //System.out.printf("toTag done\n");
         return root;
     }
 

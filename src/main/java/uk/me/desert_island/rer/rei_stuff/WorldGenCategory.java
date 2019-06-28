@@ -63,8 +63,9 @@ public class WorldGenCategory implements RecipeCategory<WorldGenDisplay> {
             
             @Override
             public void render(int mouseX, int mouseY, float delta) {
-                WorldGenState wgstate = WorldGenState.byDimension(DimensionType.OVERWORLD);
-
+                DimensionType dim = this.minecraft.player.dimension;
+                WorldGenState wgstate = WorldGenState.byDimension(dim);
+        
                 int graph_height = 60;
                 double max_portion = wgstate.get_max_portion(block);
 

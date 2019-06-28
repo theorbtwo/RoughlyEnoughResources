@@ -8,6 +8,7 @@ import net.minecraft.block.Blocks;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.world.dimension.DimensionType;
 
 public class RERUtils {
 
@@ -17,6 +18,18 @@ public class RERUtils {
 		LOGGER = LogManager.getFormatterLogger("rer-ru");
 	}
 
+    public static ItemStack DimensionType_to_ItemStack(DimensionType dt) {
+        if (dt == DimensionType.OVERWORLD) {
+            return new ItemStack(Items.GRASS_BLOCK);
+        }
+        if (dt == DimensionType.THE_NETHER) {
+            return new ItemStack(Items.NETHERRACK);
+        }
+        if (dt == DimensionType.THE_END) {
+            return new ItemStack(Items.END_STONE);
+        }
+        return new ItemStack(Items.GLASS);
+    }
 
     public static ItemStack Block_to_ItemStack(Block block) {
         Item item = block.asItem();

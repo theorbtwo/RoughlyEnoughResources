@@ -40,7 +40,7 @@ public abstract class ServerWorldMixin extends World {
     )
     private void constructor(MinecraftServer server, Executor executor, WorldSaveHandler oldWorldSaveHandler, LevelProperties levelProperties, DimensionType dimensionType, Profiler profiler, WorldGenerationProgressListener worldGenerationProgressListener, CallbackInfo ci) {
 
-        LOGGER.info("RER server world constructor\n");
+        //LOGGER.info("RER server world constructor\n");
         PersistentStateManager psm = ((ServerWorld) (Object) this).getPersistentStateManager();
         WorldGenState.register_psm(psm, dimensionType);
     }

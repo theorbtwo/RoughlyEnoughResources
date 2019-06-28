@@ -26,6 +26,7 @@ public class ChunkGeneratorMixin {
 
 	@Inject(at = @At("RETURN"), method = "generateFeatures(Lnet/minecraft/world/ChunkRegion;)V")
 	private void generateFeatures(ChunkRegion region, CallbackInfo info) {
+		long start_time = System.nanoTime();
 		int cent_chunk_x = region.getCenterChunkX();
 		int cent_chunk_z = region.getCenterChunkZ();
 		int cent_block_x = cent_chunk_x * 16;
@@ -55,8 +56,10 @@ public class ChunkGeneratorMixin {
 			}
 		}
 
-		LOGGER.info("calling markDirty");
+		//LOGGER.info("calling markDirty");
 		state.markDirty();
-		LOGGER.info("markDirty done");
+		//LOGGER.info("markDirty done");
+		long end_time = System.nanoTime();
+		LOGGER.info("RER profiling that chunk took %f ms", (end_time - start_time)/1e9);
 	}
 }

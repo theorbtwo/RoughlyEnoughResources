@@ -3,7 +3,7 @@
 package uk.me.desert_island.rer.mixin;
 
 import uk.me.desert_island.rer.WorldGenState;
-
+import uk.me.desert_island.rer.rei_stuff.LootDisplay;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.WorldGenerationProgressListener;
 import net.minecraft.server.world.ServerWorld;
@@ -43,5 +43,9 @@ public abstract class ServerWorldMixin extends World {
         //LOGGER.info("RER server world constructor\n");
         PersistentStateManager psm = ((ServerWorld) (Object) this).getPersistentStateManager();
         WorldGenState.register_psm(psm, dimensionType);
+
+        if (dimensionType == DimensionType.OVERWORLD) {
+            LootDisplay.world = (ServerWorld) (Object) this;
+        }
     }
 }

@@ -3,6 +3,7 @@ package uk.me.desert_island.rer.rei_stuff;
 import net.minecraft.block.Block;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.world.World;
 import net.minecraft.world.loot.context.LootContextParameters;
 import net.minecraft.world.loot.context.LootContextTypes;
 import net.minecraft.world.loot.context.LootContext.Builder;
@@ -20,9 +21,11 @@ public class BlockLootDisplay extends LootDisplay {
 	}
 
 	@Override
-    void fill_context_builder(Builder context_builder) {
+    boolean fill_context_builder(Builder context_builder, World world) {
         context_builder.put(LootContextParameters.TOOL, new ItemStack(Items.DIAMOND_PICKAXE));
         context_builder.put(LootContextParameters.POSITION, new net.minecraft.util.math.BlockPos(0, 0, 0));
         context_builder.put(LootContextParameters.BLOCK_STATE, in_block.getDefaultState());
+
+        return true;
     }
 }

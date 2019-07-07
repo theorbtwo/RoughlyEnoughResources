@@ -15,6 +15,9 @@ import me.shedaniel.rei.gui.widget.Widget;
 import net.minecraft.client.resource.language.I18n;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.StringTag;
 import net.minecraft.util.Identifier;
 import uk.me.desert_island.rer.LootOutput;
 
@@ -56,14 +59,27 @@ public class LootCategory implements RecipeCategory<LootDisplay> {
 
         List<LootOutput> outputs = display.getOutputs();
 
+        LabelWidget extra_text_widget = new LabelWidget((int)bounds.getCenterX(), (int)bounds.getMaxY()-(3+8+2), "");
+        widgets.add(extra_text_widget);
+
         final int slot_widget_size = 18;
         final int columns = (int)(bounds.getWidth()/slot_widget_size);
         final int rows = (int)(bounds.getHeight()/slot_widget_size);
 
-        int stack_i=0;
+        SlotWidget in_widget = new SlotWidget((int)bounds.getMinX(), (int)bounds.getMinY(), display.in_stack, true, true);
+        widgets.add(in_widget);
+
+        int stack_i=2;
 
         for (LootOutput output : outputs) {
             ItemStack stack = output.output;
+            if (output.extra_text != null) {
+                CompoundTag display_tag = stack.getOrCreateSubTag("display");
+                ListTag lore_list = new ListTag();
+                lore_list.add(new StringTag(output.extra_text));
+                display_tag.put("Lore", lore_list);
+            }
+      
             int col = (int)stack_i % columns;
             int row = (int)stack_i / columns;
 
@@ -78,7 +94,6 @@ public class LootCategory implements RecipeCategory<LootDisplay> {
             stack_i = stack_i + 1;
         }
 
-        widgets.add(new LabelWidget((int)bounds.getCenterX(), (int)bounds.getMaxY()-(3+8+2), display.in_stack.toString()));
 
         return widgets;
     }

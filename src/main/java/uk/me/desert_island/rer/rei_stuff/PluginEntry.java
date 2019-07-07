@@ -4,6 +4,8 @@ import me.shedaniel.rei.api.REIPluginEntry;
 import me.shedaniel.rei.api.RecipeHelper;
 import net.minecraft.block.Block;
 import net.minecraft.entity.EntityType;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.SpawnEggItem;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.loot.LootTables;
@@ -45,5 +47,16 @@ public class PluginEntry implements REIPluginEntry {
                 }
             }
         }
+
+        for (EntityType<?> entity_type : Registry.ENTITY_TYPE) {
+            Identifier drop_table_id = entity_type.getLootTableId();
+
+            if (drop_table_id != null &&
+                drop_table_id != LootTables.EMPTY) {
+                LootDisplay display = new EntityLootDisplay(entity_type);
+                recipeHelper.registerDisplay(LootCategory.CATEGORY_ID, display);
+
+        }
+}
     }
 }

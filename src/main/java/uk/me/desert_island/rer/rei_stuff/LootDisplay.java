@@ -21,6 +21,7 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.BoundedIntUnaryOperator;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
+import net.minecraft.world.World;
 import net.minecraft.world.loot.BinomialLootTableRange;
 import net.minecraft.world.loot.ConstantLootTableRange;
 import net.minecraft.world.loot.LootPool;
@@ -44,18 +45,19 @@ public abstract class LootDisplay implements RecipeDisplay<Recipe<Inventory>> {
 	public LootContextType context_type;
 	public List<LootOutput> outputs = null;
 
+	/* from LootManager */
 	private static final Gson gson = (new GsonBuilder())
-	.registerTypeAdapter(UniformLootTableRange.class, new UniformLootTableRange.Serializer())
-	.registerTypeAdapter(BinomialLootTableRange.class, new BinomialLootTableRange.Serializer())
-	.registerTypeAdapter(ConstantLootTableRange.class, new ConstantLootTableRange.Serializer())
-	.registerTypeAdapter(BoundedIntUnaryOperator.class, new BoundedIntUnaryOperator.Serializer())
-	.registerTypeAdapter(LootPool.class, new LootPool.Serializer())
-	.registerTypeAdapter(LootSupplier.class, new LootSupplier.Serializer())
-	.registerTypeHierarchyAdapter(LootEntry.class, new LootEntries.Serializer())
-	.registerTypeHierarchyAdapter(LootFunction.class, new LootFunctions.Factory())
-	.registerTypeHierarchyAdapter(LootCondition.class, new LootConditions.Factory())
-	.registerTypeHierarchyAdapter(LootContext.EntityTarget.class, new LootContext.EntityTarget.Serializer())
-	.create();
+		.registerTypeAdapter(UniformLootTableRange.class, new UniformLootTableRange.Serializer())
+		.registerTypeAdapter(BinomialLootTableRange.class, new BinomialLootTableRange.Serializer())
+		.registerTypeAdapter(ConstantLootTableRange.class, new ConstantLootTableRange.Serializer())
+		.registerTypeAdapter(BoundedIntUnaryOperator.class, new BoundedIntUnaryOperator.Serializer())
+		.registerTypeAdapter(LootPool.class, new LootPool.Serializer())
+		.registerTypeAdapter(LootSupplier.class, new LootSupplier.Serializer())
+		.registerTypeHierarchyAdapter(LootEntry.class, new LootEntries.Serializer())
+		.registerTypeHierarchyAdapter(LootFunction.class, new LootFunctions.Factory())
+		.registerTypeHierarchyAdapter(LootCondition.class, new LootConditions.Factory())
+		.registerTypeHierarchyAdapter(LootContext.EntityTarget.class, new LootContext.EntityTarget.Serializer())
+		.create();
 
 	@Override
 	public Optional<Recipe<Inventory>> getRecipe() {
@@ -109,17 +111,55 @@ public abstract class LootDisplay implements RecipeDisplay<Recipe<Inventory>> {
 		return outputs;
 	}
 
+	public void munch_loot_condition(JsonElement cond_elem, List<LootOutput> outputs) {
+		JsonObject cond_obj = cond_elem.getAsJsonObject();
+		String kind = cond_obj.get("condition").getAsString();
+
+		if (kind.equals("minecraft:survives_explosion")) {
+			/* Do nothing, this is generally just confusing. */
+		} else if (kind.equals("minecraft:match_tool") &&
+		           cond_obj.get("predicate").getAsJsonObject().has("enchantments"))
+		{
+			for (JsonElement ench_elem : cond_obj.get("predicate").getAsJsonObject().get("enchantments").getAsJsonArray()) {
+				JsonObject ench_obj = ench_elem.getAsJsonObject();
+				String enchantment = ench_obj.get("enchantment").getAsString();
+				if (enchantment.equals("minecraft:silk_touch")) {
+					for (LootOutput output : outputs) {
+						output.add_extra_text("silk touch");
+					}
+				} else {
+					System.out.printf("Unhandled enchantment %s\n", enchantment);
+				}
+			}
+		} else {
+			//throw new Error(String.format("Don't know how to deal with condition of type %s (%s)", kind, cond_obj));
+			System.out.printf("Don't know how to deal with condition of type %s (%s)", kind, cond_obj);
+		}
+
+	}
+
 	public List<LootOutput> munch_loot_entry_json(JsonObject json_entry) {
 		String type = json_entry.get("type").getAsString();
 
 		List<LootOutput> outputs = new ArrayList<LootOutput>();
+		/* creeper_spawn_egg -> minecraft:tag */
+		/* elder_guardian_spawn_egg -> minecraft:loot_table */
 		if (type.equals("minecraft:item")) {
 			outputs.addAll(munch_loot_entry_item_json(json_entry));
 		} else if (type.equals("minecraft:alternatives")) {
 			outputs.addAll(munch_loot_entry_alternatives_json(json_entry));
+		} else if (type.equals("minecraft:empty")) {
+			/* elder_guardian_spawn_egg, guardian_spawn_egg */
+			/* do nothing */
 		} else {
 			//throw new Error(String.format("Don't know how to deal with entry of type %s (%s)", type, json_entry));
 			System.out.printf("Don't know how to deal with entry of type %s (%s)", type, json_entry);
+		}
+
+		if (json_entry.has("conditions")) {
+			for (JsonElement cond_elem : json_entry.get("conditions").getAsJsonArray()) {
+				munch_loot_condition(cond_elem, outputs);
+			}
 		}
 
 		return outputs;
@@ -162,7 +202,9 @@ public abstract class LootDisplay implements RecipeDisplay<Recipe<Inventory>> {
 		}
 		if (outputs == null) {
 			LootContext.Builder context_builder = new LootContext.Builder(world);
-			this.fill_context_builder(context_builder);
+			if (!this.fill_context_builder(context_builder, world)) {
+				return new ArrayList<LootOutput>();
+			}
 			LootContext loot_context = context_builder.build(context_type);
 			LootSupplier loot_supplier = loot_context.getLootManager().getSupplier(drop_table_id);
 
@@ -183,7 +225,7 @@ public abstract class LootDisplay implements RecipeDisplay<Recipe<Inventory>> {
 		return outputs;
 	}
 
-	abstract void fill_context_builder(Builder context_builder2);
+	abstract boolean fill_context_builder(Builder context_builder2, World world);
 
 	public void set_world(ServerWorld w) {
 		world = w;

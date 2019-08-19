@@ -32,7 +32,9 @@ dependencies {
 	// PSA: Some older mods, compiled on Loom 0.2.1, might have outdated Maven POMs.
 	// You may need to force-disable transitiveness on them.
 	
-    modCompile "me.shedaniel:RoughlyEnoughItems:2.9.1+build.122"
+    modCompile ("me.shedaniel:RoughlyEnoughItems:3.0-pre+build.1") {
+		exclude module: "ModMenu"
+	}
 
 	// Testing purposes: I think there's some sort of conflict?
     modCompile "arcanemagic:ArcaneMagic:1.0.0:beta3"

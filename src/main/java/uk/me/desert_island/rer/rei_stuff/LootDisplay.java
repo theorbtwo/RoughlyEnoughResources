@@ -1,32 +1,15 @@
 package uk.me.desert_island.rer.rei_stuff;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-
+import com.google.gson.*;
 import me.shedaniel.rei.api.RecipeDisplay;
-import net.minecraft.inventory.Inventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.recipe.Recipe;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.BoundedIntUnaryOperator;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
-import net.minecraft.world.loot.BinomialLootTableRange;
-import net.minecraft.world.loot.ConstantLootTableRange;
-import net.minecraft.world.loot.LootPool;
-import net.minecraft.world.loot.LootSupplier;
-import net.minecraft.world.loot.UniformLootTableRange;
+import net.minecraft.world.loot.*;
 import net.minecraft.world.loot.condition.LootCondition;
 import net.minecraft.world.loot.condition.LootConditions;
 import net.minecraft.world.loot.context.LootContext;
@@ -38,7 +21,10 @@ import net.minecraft.world.loot.function.LootFunction;
 import net.minecraft.world.loot.function.LootFunctions;
 import uk.me.desert_island.rer.LootOutput;
 
-public abstract class LootDisplay implements RecipeDisplay<Recipe<Inventory>> {
+import java.util.ArrayList;
+import java.util.List;
+
+public abstract class LootDisplay implements RecipeDisplay {
 	public ItemStack in_stack;
 	public static ServerWorld world;
 	public Identifier drop_table_id;
@@ -58,11 +44,6 @@ public abstract class LootDisplay implements RecipeDisplay<Recipe<Inventory>> {
 		.registerTypeHierarchyAdapter(LootCondition.class, new LootConditions.Factory())
 		.registerTypeHierarchyAdapter(LootContext.EntityTarget.class, new LootContext.EntityTarget.Serializer())
 		.create();
-
-	@Override
-	public Optional<Recipe<Inventory>> getRecipe() {
-		return Optional.empty();
-	}
 
 	@Override
 	public List<List<ItemStack>> getInput() {

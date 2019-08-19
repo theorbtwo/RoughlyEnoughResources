@@ -5,14 +5,14 @@
 
 package uk.me.desert_island.rer.rei_stuff;
 
-import java.awt.*;
+import me.shedaniel.math.api.Rectangle;
+import me.shedaniel.rei.gui.widget.WidgetWithBounds;
+import net.minecraft.client.gui.Element;
+
 import java.util.Collections;
 import java.util.List;
 
-import me.shedaniel.rei.gui.widget.HighlightableWidget;
-import net.minecraft.client.gui.Element;
-
-public class LeftLabelWidget extends HighlightableWidget {
+public class LeftLabelWidget extends WidgetWithBounds {
 
     public int x;
     public int y;

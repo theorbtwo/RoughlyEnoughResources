@@ -1,15 +1,9 @@
 package uk.me.desert_island.rer.rei_stuff;
 
-import java.awt.Point;
-import java.awt.Rectangle;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.function.Supplier;
-
 import com.mojang.blaze3d.platform.GlStateManager;
-
+import me.shedaniel.math.api.Point;
+import me.shedaniel.math.api.Rectangle;
 import me.shedaniel.rei.api.RecipeCategory;
-import me.shedaniel.rei.api.Renderable;
 import me.shedaniel.rei.api.Renderer;
 import me.shedaniel.rei.gui.widget.LabelWidget;
 import me.shedaniel.rei.gui.widget.RecipeBaseWidget;
@@ -26,6 +20,10 @@ import net.minecraft.util.registry.Registry;
 import net.minecraft.world.dimension.DimensionType;
 import uk.me.desert_island.rer.WorldGenState;
 
+import java.util.LinkedList;
+import java.util.List;
+import java.util.function.Supplier;
+
 
 
 
@@ -40,7 +38,7 @@ public class WorldGenCategory implements RecipeCategory<WorldGenDisplay> {
     
     @Override
     public Renderer getIcon() {
-        return Renderable.fromItemStack(new ItemStack(Blocks.GRASS_BLOCK));
+        return Renderer.fromItemStack(new ItemStack(Blocks.GRASS_BLOCK));
     }
 
     @Override
@@ -51,10 +49,10 @@ public class WorldGenCategory implements RecipeCategory<WorldGenDisplay> {
     @Override
     public List<Widget> setupDisplay(Supplier<WorldGenDisplay> recipeDisplaySupplier, Rectangle bounds) {
         final WorldGenDisplay recipeDisplay = recipeDisplaySupplier.get();
-        WorldGenRecipe recipe = recipeDisplay.getRecipe().get();
+        WorldGenRecipe recipe = recipeDisplay.recipe;
         Block block = recipe.output_block;
 
-        Point startPoint = new Point((int) bounds.getMinX()+2, (int) bounds.getMinY()+3);
+        Point startPoint = new Point(bounds.getMinX() + 2, bounds.getMinY() + 3);
         
         List<Widget> widgets = new LinkedList<>();
         LeftLabelWidget y_widget = new LeftLabelWidget(startPoint.x, startPoint.y + 3, "");
@@ -112,8 +110,8 @@ public class WorldGenCategory implements RecipeCategory<WorldGenDisplay> {
             }
         });
         widgets.add(new SlotWidget(
-            (int)(bounds.getMaxX() - (16+4)), (int)bounds.getMinY()+4, 
-            recipe.output_stack, false, true
+            (bounds.getMaxX() - (16+4)), bounds.getMinY()+4,
+            Renderer.fromItemStack(recipe.output_stack), false, true
         ));
         widgets.add(new LabelWidget((int)bounds.getCenterX(), (int)bounds.getMaxY()-(3+8+2), Registry.BLOCK.getId(block).toString()));
         widgets.add(pct_widget);

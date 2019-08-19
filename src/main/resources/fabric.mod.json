@@ -21,7 +21,7 @@
     "main": [
       "uk.me.desert_island.rer.RoughlyEnoughResources"
     ],
-    "rei_plugins": [
+    "rei_plugins_v0": [
       "uk.me.desert_island.rer.rei_stuff.PluginEntry"
     ]
   },

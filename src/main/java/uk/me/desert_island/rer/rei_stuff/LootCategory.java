@@ -1,13 +1,7 @@
 package uk.me.desert_island.rer.rei_stuff;
 
-import java.awt.Rectangle;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Supplier;
-
+import me.shedaniel.math.api.Rectangle;
 import me.shedaniel.rei.api.RecipeCategory;
-import me.shedaniel.rei.api.Renderable;
 import me.shedaniel.rei.api.Renderer;
 import me.shedaniel.rei.gui.widget.LabelWidget;
 import me.shedaniel.rei.gui.widget.SlotWidget;
@@ -20,6 +14,10 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.util.Identifier;
 import uk.me.desert_island.rer.LootOutput;
+
+import java.util.LinkedList;
+import java.util.List;
+import java.util.function.Supplier;
 
 
 
@@ -36,7 +34,7 @@ public class LootCategory implements RecipeCategory<LootDisplay> {
     @Override
     public Renderer getIcon() {
         // ???
-        return Renderable.fromItemStack(new ItemStack(Items.WOODEN_PICKAXE));
+        return Renderer.fromItemStack(new ItemStack(Items.WOODEN_PICKAXE));
     }
 
     @Override
@@ -66,7 +64,7 @@ public class LootCategory implements RecipeCategory<LootDisplay> {
         final int columns = (int)(bounds.getWidth()/slot_widget_size);
         final int rows = (int)(bounds.getHeight()/slot_widget_size);
 
-        SlotWidget in_widget = new SlotWidget((int)bounds.getMinX(), (int)bounds.getMinY(), display.in_stack, true, true);
+        SlotWidget in_widget = new SlotWidget(bounds.getMinX(), bounds.getMinY(), Renderer.fromItemStack(display.in_stack), true, true);
         widgets.add(in_widget);
 
         int stack_i=2;
@@ -88,7 +86,7 @@ public class LootCategory implements RecipeCategory<LootDisplay> {
             }
 
             //stack.setCount(outputs.get(stack));
-            SlotWidget this_widget = new SlotWidget((int)bounds.getMinX()+col*slot_widget_size, (int)bounds.getMinY()+row*slot_widget_size, stack, true, true);
+            SlotWidget this_widget = new SlotWidget(bounds.getMinX()+col*slot_widget_size, bounds.getMinY()+row*slot_widget_size, Renderer.fromItemStack(stack), true, true);
             widgets.add(this_widget);
 
             stack_i = stack_i + 1;

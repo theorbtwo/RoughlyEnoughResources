@@ -1,29 +1,34 @@
 package uk.me.desert_island.rer.rei_stuff;
 
-import me.shedaniel.rei.api.REIPluginEntry;
 import me.shedaniel.rei.api.RecipeHelper;
+import me.shedaniel.rei.api.plugins.REIPluginV0;
+import net.fabricmc.loader.api.SemanticVersion;
+import net.fabricmc.loader.util.version.VersionParsingException;
 import net.minecraft.block.Block;
 import net.minecraft.entity.EntityType;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.SpawnEggItem;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.loot.LootTables;
 import uk.me.desert_island.rer.RERUtils;
 
-public class PluginEntry implements REIPluginEntry {
+public class PluginEntry implements REIPluginV0 {
     public static final Identifier PLUGIN_ID = new Identifier("roughlyenoughresources", "rer_plugin");
     
     @Override public Identifier getPluginIdentifier() {
 	return PLUGIN_ID;
     }
-
+    
+    @Override
+    public SemanticVersion getMinimumVersion() throws VersionParsingException {
+        return SemanticVersion.parse("3.0-pre");
+    }
+    
     @Override
     public void registerPluginCategories(RecipeHelper recipeHelper) {
         recipeHelper.registerCategory(new WorldGenCategory());
         recipeHelper.registerCategory(new LootCategory());
     }
-
+    
     @Override
     public void registerRecipeDisplays(RecipeHelper recipeHelper) {
         System.out.printf("In registerRecipeDisplays\n");

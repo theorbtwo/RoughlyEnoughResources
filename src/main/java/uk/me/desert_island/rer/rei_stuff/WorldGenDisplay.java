@@ -9,16 +9,16 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.Identifier;
 import uk.me.desert_island.rer.rei_stuff.WorldGenRecipe;
 
-public class WorldGenDisplay implements RecipeDisplay<WorldGenRecipe> {
-	private WorldGenRecipe recipe;
+public class WorldGenDisplay implements RecipeDisplay {
+	WorldGenRecipe recipe;
 
 	public WorldGenDisplay(WorldGenRecipe recipe) {
 		this.recipe = recipe;
 	}
-
+	
 	@Override
-	public Optional<WorldGenRecipe> getRecipe() {
-		return Optional.of(recipe);
+	public Optional<Identifier> getRecipeLocation() {
+		return recipe != null && recipe.getId() != null ? Optional.of(recipe.getId()) : Optional.empty();
 	}
 
 	@Override

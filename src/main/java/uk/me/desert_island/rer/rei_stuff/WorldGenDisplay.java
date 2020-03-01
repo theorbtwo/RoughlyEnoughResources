@@ -1,42 +1,50 @@
 package uk.me.desert_island.rer.rei_stuff;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-
+import me.shedaniel.rei.api.EntryStack;
 import me.shedaniel.rei.api.RecipeDisplay;
-import net.minecraft.item.ItemStack;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.block.Block;
 import net.minecraft.util.Identifier;
-import uk.me.desert_island.rer.rei_stuff.WorldGenRecipe;
+import net.minecraft.world.dimension.DimensionType;
 
+import java.util.Collections;
+import java.util.List;
+
+@Environment(EnvType.CLIENT)
 public class WorldGenDisplay implements RecipeDisplay {
-	WorldGenRecipe recipe;
+    private final EntryStack outputStack;
+    private final Block outputBlock;
+    private final DimensionType dimension;
 
-	public WorldGenDisplay(WorldGenRecipe recipe) {
-		this.recipe = recipe;
-	}
-	
-	@Override
-	public Optional<Identifier> getRecipeLocation() {
-		return recipe != null && recipe.getId() != null ? Optional.of(recipe.getId()) : Optional.empty();
-	}
+    public WorldGenDisplay(EntryStack outputStack, Block outputBlock, DimensionType dimension) {
+        this.outputStack = outputStack;
+        this.outputBlock = outputBlock;
+        this.dimension = dimension;
+    }
 
-	@Override
-	public List<List<ItemStack>> getInput() {
-		return new ArrayList<List<ItemStack>>();
-	}
+    public DimensionType getDimension() {
+        return dimension;
+    }
 
-	@Override
-	public List<ItemStack> getOutput() {
-		List<ItemStack> list = new ArrayList<ItemStack>(1);
-		list.add(recipe.output_stack);
-		return list;
-	}
+    public Block getOutputBlock() {
+        return outputBlock;
+    }
 
-	@Override
-	public Identifier getRecipeCategory() {
-		return WorldGenCategory.CATEGORY_ID;
-	}
+    @Override
+    public List<List<EntryStack>> getInputEntries() {
+        return Collections.emptyList();
+    }
 
-	
+    @Override
+    public List<EntryStack> getOutputEntries() {
+        return Collections.singletonList(outputStack);
+    }
+
+    @Override
+    public Identifier getRecipeCategory() {
+        return WorldGenCategory.DIMENSION_TYPE_IDENTIFIER_MAP.get(dimension);
+    }
+
+
 }

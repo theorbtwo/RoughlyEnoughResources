@@ -1,31 +1,42 @@
 package uk.me.desert_island.rer.rei_stuff;
 
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.block.Block;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.loot.context.LootContext.Builder;
+import net.minecraft.loot.context.LootContextParameters;
+import net.minecraft.loot.context.LootContextTypes;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
-import net.minecraft.world.loot.context.LootContextParameters;
-import net.minecraft.world.loot.context.LootContextTypes;
-import net.minecraft.world.loot.context.LootContext.Builder;
 import uk.me.desert_island.rer.RERUtils;
 
+@Environment(EnvType.CLIENT)
 public class BlockLootDisplay extends LootDisplay {
 
-    private Block in_block;
+    private final Block inputBlock;
 
     public BlockLootDisplay(Block block) {
-        this.in_block = block;
-        this.in_stack = RERUtils.Block_to_ItemStack(block);
-        this.drop_table_id = block.getDropTableId();
-        this.context_type = LootContextTypes.BLOCK;
-	}
+        this.inputBlock = block;
+        this.inputStack = RERUtils.fromBlockToItemStack(block);
+        this.dropTableId = block.getDropTableId();
+        this.contextType = LootContextTypes.BLOCK;
+    }
 
-	@Override
-    boolean fill_context_builder(Builder context_builder, World world) {
-        context_builder.put(LootContextParameters.TOOL, new ItemStack(Items.DIAMOND_PICKAXE));
-        context_builder.put(LootContextParameters.POSITION, new net.minecraft.util.math.BlockPos(0, 0, 0));
-        context_builder.put(LootContextParameters.BLOCK_STATE, in_block.getDefaultState());
+    @Override
+    boolean fillContextBuilder(Builder contextBuilder, World world) {
+        contextBuilder.put(LootContextParameters.TOOL, new ItemStack(Items.DIAMOND_PICKAXE));
+        contextBuilder.put(LootContextParameters.POSITION, BlockPos.ORIGIN);
+        contextBuilder.put(LootContextParameters.BLOCK_STATE, inputBlock.getDefaultState());
 
         return true;
+    }
+
+    @Override
+    public Identifier getLocation() {
+        return Registry.BLOCK.getId(inputBlock);
     }
 }

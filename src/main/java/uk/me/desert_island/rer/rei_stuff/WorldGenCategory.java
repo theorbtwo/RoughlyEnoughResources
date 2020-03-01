@@ -1,121 +1,141 @@
 package uk.me.desert_island.rer.rei_stuff;
 
-import com.mojang.blaze3d.platform.GlStateManager;
+import com.google.common.collect.Maps;
+import com.mojang.blaze3d.systems.RenderSystem;
 import me.shedaniel.math.api.Point;
 import me.shedaniel.math.api.Rectangle;
+import me.shedaniel.rei.api.EntryStack;
 import me.shedaniel.rei.api.RecipeCategory;
-import me.shedaniel.rei.api.Renderer;
-import me.shedaniel.rei.gui.widget.LabelWidget;
-import me.shedaniel.rei.gui.widget.RecipeBaseWidget;
-import me.shedaniel.rei.gui.widget.SlotWidget;
-import me.shedaniel.rei.gui.widget.Widget;
+import me.shedaniel.rei.gui.widget.*;
+import me.shedaniel.rei.impl.ScreenHelper;
+import me.shedaniel.rei.plugin.DefaultPlugin;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.block.Block;
-import net.minecraft.block.Blocks;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.GuiLighting;
 import net.minecraft.client.resource.language.I18n;
-import net.minecraft.item.ItemStack;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.dimension.DimensionType;
-import uk.me.desert_island.rer.WorldGenState;
+import org.apache.commons.lang3.StringUtils;
+import uk.me.desert_island.rer.RERUtils;
+import uk.me.desert_island.rer.client.ClientWorldGenState;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.StringJoiner;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
-
-
-
+@Environment(EnvType.CLIENT)
 public class WorldGenCategory implements RecipeCategory<WorldGenDisplay> {
-    private static final Identifier DISPLAY_TEXTURE = new Identifier("roughlyenoughitems", "textures/gui/display.png");
-    
-    public static final Identifier CATEGORY_ID = new Identifier("roughlyenoughresources", "worldgen_category");
     @Override
     public Identifier getIdentifier() {
-        return CATEGORY_ID;
+        return DIMENSION_TYPE_IDENTIFIER_MAP.get(dimension);
     }
-    
+
+    static final Map<DimensionType, Identifier> DIMENSION_TYPE_IDENTIFIER_MAP = Maps.newHashMap();
+    private final DimensionType dimension;
+
+    public WorldGenCategory(DimensionType dimension) {
+        DIMENSION_TYPE_IDENTIFIER_MAP.put(dimension, new Identifier("roughlyenoughresources", Registry.DIMENSION_TYPE.getId(dimension).getPath() + "_worldgen_category"));
+        this.dimension = dimension;
+    }
+
+    public DimensionType getDimension() {
+        return dimension;
+    }
+
     @Override
-    public Renderer getIcon() {
-        return Renderer.fromItemStack(new ItemStack(Blocks.GRASS_BLOCK));
+    public EntryStack getLogo() {
+        return EntryStack.create(RERUtils.fromDimensionTypeToItemStack(dimension));
     }
 
     @Override
     public String getCategoryName() {
-        return I18n.translate("rer.worldgen.category");
+        return I18n.translate("rer.worldgen.category", mapAndJoinToString(Registry.DIMENSION_TYPE.getId(dimension).getPath().split("_"), StringUtils::capitalize, " "));
     }
-    
+
+    public static <T> String mapAndJoinToString(T[] list, Function<T, String> function, String separator) {
+        StringJoiner joiner = new StringJoiner(separator);
+        for (T t : list) {
+            joiner.add(function.apply(t));
+        }
+        return joiner.toString();
+    }
+
     @Override
     public List<Widget> setupDisplay(Supplier<WorldGenDisplay> recipeDisplaySupplier, Rectangle bounds) {
         final WorldGenDisplay recipeDisplay = recipeDisplaySupplier.get();
-        WorldGenRecipe recipe = recipeDisplay.recipe;
-        Block block = recipe.output_block;
+        Block block = recipeDisplay.getOutputBlock();
 
         Point startPoint = new Point(bounds.getMinX() + 2, bounds.getMinY() + 3);
-        
+
         List<Widget> widgets = new LinkedList<>();
-        LeftLabelWidget y_widget = new LeftLabelWidget(startPoint.x, startPoint.y + 3, "");
-        LeftLabelWidget pct_widget = new LeftLabelWidget(startPoint.x, startPoint.y + 13, "");
+        widgets.add(new SlotBaseWidget(new Rectangle(bounds.x + 1, bounds.y + 2, 130, 62)));
         widgets.add(new RecipeBaseWidget(bounds) {
-            
             @Override
             public void render(int mouseX, int mouseY, float delta) {
-                DimensionType dim = this.minecraft.player.dimension;
-                WorldGenState wgstate = WorldGenState.byDimension(dim);
-        
+                ClientWorldGenState worldGenState = ClientWorldGenState.byDimension(recipeDisplay.getDimension());
+
                 int graph_height = 60;
-                double max_portion = wgstate.get_max_portion(block);
+                double maxPortion = worldGenState.getMaxPortion(block);
 
-                super.render(mouseX, mouseY, delta);
-                GlStateManager.color4f(1.0F, 1.0F, 1.0F, 1.0F);
-                GuiLighting.disable();
-                MinecraftClient.getInstance().getTextureManager().bindTexture(DISPLAY_TEXTURE);
-                //blit(startPoint.x, startPoint.y, 0, 60, 103, 59);
-                
+                RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+                MinecraftClient.getInstance().getTextureManager().bindTexture(DefaultPlugin.getDisplayTexture());
+
                 int mouse_height = mouseX - startPoint.x;
-                if (mouse_height < 0 || mouse_height > 128) {
-                    y_widget.text = "";
-                    pct_widget.text = "";
-                } else {
-                    y_widget.text = String.format("%d", mouse_height);
-                    pct_widget.text = String.format("%f%%", wgstate.get_portion_at_height(block, mouse_height)*100);
-                }
 
-
-                for (int height=0; height<128; height++) {
-                    double portion = wgstate.get_portion_at_height(block, height);
+                for (int height = 0; height < 128; height++) {
+                    double portion = worldGenState.getPortionAtHeight(block, height);
                     double rel_portion;
-                    if (max_portion == 0) {
+                    if (maxPortion == 0) {
                         rel_portion = 0;
                     } else {
-                        rel_portion = portion / max_portion;
+                        rel_portion = portion / maxPortion;
                     }
-                    
+
                     fill(/*startx*/ startPoint.x + height,
-                    /*starty*/ startPoint.y + (int)(graph_height * (1-rel_portion)),
-                    /*endx  */ startPoint.x + height + 1,
-                    /*endy  */ startPoint.y + graph_height,
-                    /*color */ 0xff000000);
-                    
-                    fill(/*startx*/ startPoint.x + height,
-                    /*starty*/ startPoint.y + (int)(graph_height * (1-portion)),
-                    /*endx  */ startPoint.x + height + 1,
-                    /*endy  */ startPoint.y + graph_height,
-                    /*color */ 0xff00ff00);
-                    
-                    //System.out.printf("%s at %d: %g\n", block, height, portion);
+                            /*starty*/ startPoint.y + (int) (graph_height * (1 - rel_portion)),
+                            /*endx  */ startPoint.x + height + 1,
+                            /*endy  */ startPoint.y + graph_height,
+                            /*color */ 0xff000000);
                 }
-                
+
+                if (containsMouse(mouseX, mouseY) && mouse_height >= 0 && mouse_height < 128) {
+                    double portion = worldGenState.getPortionAtHeight(block, mouse_height);
+                    double rel_portion;
+                    if (maxPortion == 0) {
+                        rel_portion = 0;
+                    } else {
+                        rel_portion = portion / maxPortion;
+                    }
+                    fill(/*startx*/ mouseX,
+                            /*starty*/ startPoint.y,
+                            /*endx  */ mouseX + 1,
+                            /*endy  */ startPoint.y + graph_height,
+                            /*color */ 0xffebd534);
+                    fill(/*startx*/ startPoint.x,
+                            /*starty*/ startPoint.y + Math.min((int) (graph_height * (1 - rel_portion)), graph_height - 1),
+                            /*endx  */ startPoint.x + 128,
+                            /*endy  */ startPoint.y + Math.min((int) (graph_height * (1 - rel_portion)), graph_height - 1) + 1,
+                            /*color */ 0xffebd534);
+                    //noinspection UnstableApiUsage
+                    ScreenHelper.getLastOverlay().addTooltip(QueuedTooltip.create(new Point(mouseX, mouseY), "Y: " + mouse_height, "Chance: " + LootDisplay.FORMAT_MORE.format(worldGenState.getPortionAtHeight(block, mouse_height) * 100) + "%"));
+                }
             }
         });
-        widgets.add(new SlotWidget(
-            (bounds.getMaxX() - (16+4)), bounds.getMinY()+4,
-            Renderer.fromItemStack(recipe.output_stack), false, true
-        ));
-        widgets.add(new LabelWidget((int)bounds.getCenterX(), (int)bounds.getMaxY()-(3+8+2), Registry.BLOCK.getId(block).toString()));
-        widgets.add(pct_widget);
-        widgets.add(y_widget);
+        if (recipeDisplay.getOutputEntries().get(0).getType() == EntryStack.Type.RENDER)
+            widgets.add(EntryWidget.create(bounds.getMaxX() - (16), bounds.getMinY() + 3).entries(recipeDisplay.getOutputEntries()).disableFavoritesInteractions());
+        else
+            widgets.add(EntryWidget.create(bounds.getMaxX() - (16), bounds.getMinY() + 3).entries(recipeDisplay.getOutputEntries()));
+        widgets.add(LabelWidget.create(new Point(bounds.x + 65, bounds.getMaxY() - 10), Registry.BLOCK.getId(block).toString()).noShadow().color(ScreenHelper.isDarkModeEnabled() ? -4473925 : -12566464));
         return widgets;
+    }
+
+    @Override
+    public int getDisplayHeight() {
+        return 76;
     }
 }

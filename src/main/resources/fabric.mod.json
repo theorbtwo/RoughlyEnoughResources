@@ -14,12 +14,15 @@
   },
   
   "license": "CC0-1.0",
-  "icon": "assets/modid/icon.png",
+  "icon": "assets/roughlyenoughresources/icon.png",
   
   "environment": "*",
   "entrypoints": {
     "main": [
       "uk.me.desert_island.rer.RoughlyEnoughResources"
+    ],
+    "client": [
+      "uk.me.desert_island.rer.RoughlyEnoughResourcesClient"
     ],
     "rei_plugins_v0": [
       "uk.me.desert_island.rer.rei_stuff.PluginEntry"
@@ -34,5 +37,6 @@
     "fabric": "*"
   },
   "suggests": {
+    "roughlyenoughitems": "*"
   }
 }

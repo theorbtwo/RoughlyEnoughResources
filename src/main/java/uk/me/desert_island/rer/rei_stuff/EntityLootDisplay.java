@@ -1,37 +1,47 @@
 package uk.me.desert_island.rer.rei_stuff;
 
+import me.shedaniel.rei.api.EntryStack;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.item.ItemStack;
 import net.minecraft.item.SpawnEggItem;
+import net.minecraft.loot.context.LootContext.Builder;
+import net.minecraft.loot.context.LootContextParameters;
+import net.minecraft.loot.context.LootContextTypes;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
-import net.minecraft.world.loot.context.LootContext.Builder;
-import net.minecraft.world.loot.context.LootContextParameters;
-import net.minecraft.world.loot.context.LootContextTypes;
 
+@Environment(EnvType.CLIENT)
 public class EntityLootDisplay extends LootDisplay {
 
-    private EntityType<?> in_entity;
+    private final EntityType<?> inputEntity;
 
-    public EntityLootDisplay(EntityType<?> entity) {
-        this.in_entity = entity;
-        this.in_stack = new ItemStack(SpawnEggItem.forEntity(entity));
-        this.drop_table_id = entity.getLootTableId();
-        this.context_type = LootContextTypes.ENTITY;
-	}
+    public EntityLootDisplay(EntityType<?> inputEntity) {
+        this.inputEntity = inputEntity;
+        this.inputStack = EntryStack.create(SpawnEggItem.forEntity(inputEntity));
+        this.dropTableId = inputEntity.getLootTableId();
+        this.contextType = LootContextTypes.ENTITY;
+    }
 
-	@Override
-    boolean fill_context_builder(Builder context_builder, World world) {
-        Entity entity = in_entity.create(world);
+    @Override
+    public Identifier getLocation() {
+        return Registry.ENTITY_TYPE.getId(inputEntity);
+    }
+
+    @Override
+    boolean fillContextBuilder(Builder contextBuilder, World world) {
+        Entity entity = inputEntity.create(world);
 
         if (entity == null) {
             return false;
         }
 
-        context_builder.put(LootContextParameters.POSITION, new net.minecraft.util.math.BlockPos(0, 0, 0));
-        context_builder.put(LootContextParameters.THIS_ENTITY, entity);
-        context_builder.put(LootContextParameters.DAMAGE_SOURCE, DamageSource.SWEET_BERRY_BUSH);
+        contextBuilder.put(LootContextParameters.POSITION, new net.minecraft.util.math.BlockPos(0, 0, 0));
+        contextBuilder.put(LootContextParameters.THIS_ENTITY, entity);
+        contextBuilder.put(LootContextParameters.DAMAGE_SOURCE, DamageSource.SWEET_BERRY_BUSH);
 
         return true;
     }

@@ -1,214 +1,439 @@
 package uk.me.desert_island.rer.rei_stuff;
 
+import com.google.common.collect.Lists;
 import com.google.gson.*;
+import me.shedaniel.rei.api.EntryStack;
 import me.shedaniel.rei.api.RecipeDisplay;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.resource.language.I18n;
+import net.minecraft.client.world.ClientWorld;
+import net.minecraft.enchantment.Enchantment;
+import net.minecraft.enchantment.Enchantments;
+import net.minecraft.inventory.BasicInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.server.world.ServerWorld;
+import net.minecraft.loot.*;
+import net.minecraft.loot.condition.LootCondition;
+import net.minecraft.loot.condition.LootConditions;
+import net.minecraft.loot.context.LootContext;
+import net.minecraft.loot.context.LootContext.Builder;
+import net.minecraft.loot.context.LootContextType;
+import net.minecraft.loot.entry.LootEntries;
+import net.minecraft.loot.entry.LootEntry;
+import net.minecraft.loot.function.LootFunction;
+import net.minecraft.loot.function.LootFunctions;
+import net.minecraft.recipe.RecipeType;
+import net.minecraft.recipe.SmeltingRecipe;
 import net.minecraft.util.BoundedIntUnaryOperator;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
-import net.minecraft.world.loot.*;
-import net.minecraft.world.loot.condition.LootCondition;
-import net.minecraft.world.loot.condition.LootConditions;
-import net.minecraft.world.loot.context.LootContext;
-import net.minecraft.world.loot.context.LootContext.Builder;
-import net.minecraft.world.loot.context.LootContextType;
-import net.minecraft.world.loot.entry.LootEntries;
-import net.minecraft.world.loot.entry.LootEntry;
-import net.minecraft.world.loot.function.LootFunction;
-import net.minecraft.world.loot.function.LootFunctions;
-import uk.me.desert_island.rer.LootOutput;
+import uk.me.desert_island.rer.RERUtils;
+import uk.me.desert_island.rer.client.ClientLootCache;
 
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
+@SuppressWarnings("StatementWithEmptyBody")
+@Environment(EnvType.CLIENT)
 public abstract class LootDisplay implements RecipeDisplay {
-	public ItemStack in_stack;
-	public static ServerWorld world;
-	public Identifier drop_table_id;
-	public LootContextType context_type;
-	public List<LootOutput> outputs = null;
+    public EntryStack inputStack;
+    public Identifier dropTableId;
+    public LootContextType contextType;
+    public List<LootOutput> outputs = null;
+    public static final NumberFormat FORMAT = new DecimalFormat("#.##");
+    public static final NumberFormat FORMAT_MORE = new DecimalFormat("#.####");
 
-	/* from LootManager */
-	private static final Gson gson = (new GsonBuilder())
-		.registerTypeAdapter(UniformLootTableRange.class, new UniformLootTableRange.Serializer())
-		.registerTypeAdapter(BinomialLootTableRange.class, new BinomialLootTableRange.Serializer())
-		.registerTypeAdapter(ConstantLootTableRange.class, new ConstantLootTableRange.Serializer())
-		.registerTypeAdapter(BoundedIntUnaryOperator.class, new BoundedIntUnaryOperator.Serializer())
-		.registerTypeAdapter(LootPool.class, new LootPool.Serializer())
-		.registerTypeAdapter(LootSupplier.class, new LootSupplier.Serializer())
-		.registerTypeHierarchyAdapter(LootEntry.class, new LootEntries.Serializer())
-		.registerTypeHierarchyAdapter(LootFunction.class, new LootFunctions.Factory())
-		.registerTypeHierarchyAdapter(LootCondition.class, new LootConditions.Factory())
-		.registerTypeHierarchyAdapter(LootContext.EntityTarget.class, new LootContext.EntityTarget.Serializer())
-		.create();
+    /* from LootManager */
+    private static final Gson GSON = (new GsonBuilder()).registerTypeAdapter(UniformLootTableRange.class, new UniformLootTableRange.Serializer()).registerTypeAdapter(BinomialLootTableRange.class, new BinomialLootTableRange.Serializer()).registerTypeAdapter(ConstantLootTableRange.class, new ConstantLootTableRange.Serializer()).registerTypeAdapter(BoundedIntUnaryOperator.class, new BoundedIntUnaryOperator.Serializer()).registerTypeAdapter(LootPool.class, new LootPool.Serializer()).registerTypeAdapter(LootTable.class, new LootTable.Serializer()).registerTypeHierarchyAdapter(LootEntry.class, new LootEntries.Serializer()).registerTypeHierarchyAdapter(LootFunction.class, new LootFunctions.Factory()).registerTypeHierarchyAdapter(LootCondition.class, new LootConditions.Factory()).registerTypeHierarchyAdapter(LootContext.EntityTarget.class, new LootContext.EntityTarget.Serializer()).create();
 
-	@Override
-	public List<List<ItemStack>> getInput() {
-		List<ItemStack> inner_list = new ArrayList<ItemStack>();
-		inner_list.add(this.in_stack);
-		List<List<ItemStack>> outer_stack = new ArrayList<List<ItemStack>>();
-		outer_stack.add(inner_list);
-		return new ArrayList<List<ItemStack>>();
-	}
+    @Override
+    public List<List<EntryStack>> getInputEntries() {
+        return Collections.singletonList(Collections.singletonList(this.inputStack));
+    }
 
-	@Override
-	public List<ItemStack> getOutput() {
-		List<LootOutput> outputs = getOutputs();
+    public abstract Identifier getLocation();
 
-		List<ItemStack> output_stacks = new ArrayList<ItemStack>();
-		for (LootOutput output : outputs) {
-			output_stacks.add(output.output);
-		}
+    @Override
+    public List<EntryStack> getOutputEntries() {
+        List<EntryStack> stacks = Lists.newArrayList();
+        for (LootOutput output : getOutputs()) {
+            stacks.add(output.original);
+        }
+        return stacks;
+    }
 
-		return output_stacks;
-	}
+    public List<EntryStack> getFlattenedOutputEntries() {
+        List<EntryStack> stacks = Lists.newArrayList();
+        for (List<EntryStack> entry : getFullOutputEntries()) {
+            if (entry.isEmpty()) {
+                stacks.add(EntryStack.empty());
+            } else {
+                stacks.add(entry.get(0));
+            }
+        }
+        return stacks;
+    }
 
-	@Override
-	public Identifier getRecipeCategory() {
-		return LootCategory.CATEGORY_ID;
-	}
+    public List<List<EntryStack>> getFullOutputEntries() {
+        List<List<EntryStack>> stacks = Lists.newArrayList();
+        for (LootOutput output : getOutputs()) {
+            stacks.add(output.output);
+        }
+        return stacks;
+    }
 
-	public List<LootOutput> munch_loot_entry_alternatives_json(JsonObject json_entry) {
-		List<LootOutput> outputs = new ArrayList<LootOutput>();
-		JsonArray children = json_entry.get("children").getAsJsonArray();
+    @Override
+    public Identifier getRecipeCategory() {
+        return LootCategory.CATEGORY_ID;
+    }
 
-		for (JsonElement child : children) {
-			outputs.addAll(munch_loot_entry_json(child.getAsJsonObject()));
-		}
+    public List<LootOutput> munchLootEntryAlternativesJson(JsonObject object) {
+        List<LootOutput> outputs = new ArrayList<>();
+        JsonArray children = object.get("children").getAsJsonArray();
 
-		return outputs;
-	}
+        for (JsonElement child : children) {
+            outputs.addAll(munchLootEntryJson(child.getAsJsonObject()));
+        }
 
-	public List<LootOutput> munch_loot_entry_item_json(JsonObject json_entry) {
-		Item item = Registry.ITEM.get(new Identifier(json_entry.get("name").getAsString()));
-		ItemStack item_stack = new ItemStack(item);
-		LootOutput output = new LootOutput();
-		output.output = item_stack;
-		List<LootOutput> outputs = new ArrayList<LootOutput>();
-		outputs.add(output);
-		return outputs;
-	}
+        if (object.getAsJsonObject().has("conditions")) {
+            for (JsonElement conditionElement : object.getAsJsonObject().get("conditions").getAsJsonArray()) {
+                munchLootCondition(conditionElement, outputs);
+            }
+        }
+        if (object.getAsJsonObject().has("functions")) {
+            List<LootOutput> newOutputs = new ArrayList<>();
+            for (JsonElement functionElement : object.getAsJsonObject().get("functions").getAsJsonArray()) {
+                List<LootOutput> list = munchLootFunctions(functionElement, outputs);
+                if (list != null)
+                    newOutputs.addAll(list);
+            }
+            outputs.addAll(newOutputs);
+        }
 
-	public void munch_loot_condition(JsonElement cond_elem, List<LootOutput> outputs) {
-		JsonObject cond_obj = cond_elem.getAsJsonObject();
-		String kind = cond_obj.get("condition").getAsString();
+        return outputs;
+    }
 
-		if (kind.equals("minecraft:survives_explosion")) {
-			/* Do nothing, this is generally just confusing. */
-		} else if (kind.equals("minecraft:match_tool") &&
-		           cond_obj.get("predicate").getAsJsonObject().has("enchantments"))
-		{
-			for (JsonElement ench_elem : cond_obj.get("predicate").getAsJsonObject().get("enchantments").getAsJsonArray()) {
-				JsonObject ench_obj = ench_elem.getAsJsonObject();
-				String enchantment = ench_obj.get("enchantment").getAsString();
-				if (enchantment.equals("minecraft:silk_touch")) {
-					for (LootOutput output : outputs) {
-						output.add_extra_text("silk touch");
-					}
-				} else {
-					System.out.printf("Unhandled enchantment %s\n", enchantment);
-				}
-			}
-		} else {
-			//throw new Error(String.format("Don't know how to deal with condition of type %s (%s)", kind, cond_obj));
-			System.out.printf("Don't know how to deal with condition of type %s (%s)", kind, cond_obj);
-		}
+    public List<LootOutput> munchLootEntryItemJson(JsonObject object) {
+        Item item = Registry.ITEM.get(new Identifier(object.get("name").getAsString()));
+        EntryStack stack = EntryStack.create(item);
+        LootOutput output = new LootOutput();
+        output.output = Lists.newArrayList(stack);
+        output.original = stack.copy();
+        List<LootOutput> outputs = new ArrayList<>();
+        outputs.add(output);
+        return outputs;
+    }
 
-	}
+    public void munchLootCondition(JsonElement conditionElement, List<LootOutput> outputs) {
+        JsonObject conditionObject = conditionElement.getAsJsonObject();
+        String kind = new Identifier(conditionObject.get("condition").getAsString()).toString();
 
-	public List<LootOutput> munch_loot_entry_json(JsonObject json_entry) {
-		String type = json_entry.get("type").getAsString();
+        if (kind.equals("minecraft:inverted")) {
+            for (LootOutput output : outputs) {
+                output.nowInverted = !output.nowInverted;
+                output.lastInverted = false;
+            }
+            if (conditionObject.has("term"))
+                munchLootCondition(conditionObject.get("term").getAsJsonObject(), outputs);
+            if (conditionObject.has("terms"))
+                for (JsonElement alternateCondition : conditionObject.get("terms").getAsJsonArray()) {
+                    munchLootCondition(alternateCondition, outputs);
+                }
+            for (LootOutput output : outputs) {
+                output.nowInverted = !output.nowInverted;
+                output.lastInverted = false;
+            }
+        } else if (kind.equals("minecraft:alternative")) {
+            if (conditionObject.has("term"))
+                munchLootCondition(conditionObject.get("term").getAsJsonObject(), outputs);
+            if (conditionObject.has("terms"))
+                for (JsonElement alternateCondition : conditionObject.get("terms").getAsJsonArray()) {
+                    munchLootCondition(alternateCondition, outputs);
+                }
+        } else if (kind.equals("minecraft:killed_by_player")) {
+            for (LootOutput output : outputs) {
+                output.addExtraText(I18n.translate("rer.condition.killedByPlayer"));
+            }
+        } else if (kind.equals("minecraft:survives_explosion")) {
+            /* Do nothing, this is generally just confusing. */
+        } else if (kind.equals("minecraft:entity_properties") && conditionObject.has("predicate") && conditionObject.get("predicate").getAsJsonObject().has("flags") && conditionObject.get("predicate").getAsJsonObject().get("flags").getAsJsonObject().has("is_on_fire") && conditionObject.get("predicate").getAsJsonObject().get("flags").getAsJsonObject().get("is_on_fire").getAsBoolean() && conditionObject.has("entity") && conditionObject.get("entity").getAsString().equals("this")) {
+            for (LootOutput output : outputs) {
+                output.addExtraText(I18n.translate("rer.condition.onFire"));
+            }
+        } else if (kind.equals("minecraft:block_state_property") || kind.equals("minecraft:entity_properties") || kind.equals("minecraft:damage_source_properties")) {
+            // ignore
+        } else if (kind.equals("minecraft:match_tool") && conditionObject.has("predicate") && conditionObject.get("predicate").getAsJsonObject().has("enchantments")) {
+            for (JsonElement enchantmentElement : conditionObject.get("predicate").getAsJsonObject().get("enchantments").getAsJsonArray()) {
+                JsonObject enchantmentObject = enchantmentElement.getAsJsonObject();
+                String enchantmentString = enchantmentObject.get("enchantment").getAsString();
+                Enchantment enchantment = Registry.ENCHANTMENT.get(new Identifier(enchantmentString));
+                if (enchantment != null) {
+                    for (LootOutput output : outputs) {
+                        output.addExtraText(I18n.translate("rer.condition.enchantment", I18n.translate(enchantment.getTranslationKey()).toLowerCase()));
+                    }
+                }
+            }
+        } else if (kind.equals("minecraft:random_chance") && conditionObject.has("chance")) {
+            double chance = conditionObject.get("chance").getAsDouble() * 100.0;
+            for (LootOutput output : outputs) {
+                output.addExtraText(I18n.translate("rer.condition.chance", FORMAT.format(chance)));
+            }
+        } else if (kind.equals("minecraft:random_chance_with_looting") && conditionObject.has("chance")) {
+            double chance = conditionObject.get("chance").getAsDouble() * 100.0;
+            for (LootOutput output : outputs) {
+                output.addExtraText(I18n.translate("rer.condition.chance.looting", FORMAT.format(chance)));
+            }
+        } else if (kind.equals("minecraft:match_tool") && conditionObject.has("predicate") && conditionObject.get("predicate").getAsJsonObject().has("item")) {
+            String itemId = conditionObject.get("predicate").getAsJsonObject().get("item").getAsString();
+            Item item = Registry.ITEM.get(new Identifier(itemId));
+            for (LootOutput output : outputs) {
+                output.addExtraText(I18n.translate("rer.condition.item", item.getName().getString().toLowerCase()));
+            }
+        } else if (kind.equals("minecraft:table_bonus")) {
+            double chance = conditionObject.get("chances").getAsJsonArray().get(0).getAsDouble() * 100.0;
+            for (LootOutput output : outputs) {
+                output.addExtraText(I18n.translate("rer.condition.chance", FORMAT.format(chance)));
+            }
+        } else {
+            RERUtils.LOGGER.debug("Don't know how to deal with condition of type %s (%s)", kind, conditionObject);
+        }
+    }
 
-		List<LootOutput> outputs = new ArrayList<LootOutput>();
-		/* creeper_spawn_egg -> minecraft:tag */
-		/* elder_guardian_spawn_egg -> minecraft:loot_table */
-		if (type.equals("minecraft:item")) {
-			outputs.addAll(munch_loot_entry_item_json(json_entry));
-		} else if (type.equals("minecraft:alternatives")) {
-			outputs.addAll(munch_loot_entry_alternatives_json(json_entry));
-		} else if (type.equals("minecraft:empty")) {
-			/* elder_guardian_spawn_egg, guardian_spawn_egg */
-			/* do nothing */
-		} else {
-			//throw new Error(String.format("Don't know how to deal with entry of type %s (%s)", type, json_entry));
-			System.out.printf("Don't know how to deal with entry of type %s (%s)", type, json_entry);
-		}
+    public List<LootOutput> munchLootEntryJson(JsonObject object) {
+        String type = new Identifier(object.get("type").getAsString()).toString();
 
-		if (json_entry.has("conditions")) {
-			for (JsonElement cond_elem : json_entry.get("conditions").getAsJsonArray()) {
-				munch_loot_condition(cond_elem, outputs);
-			}
-		}
+        List<LootOutput> outputs = new ArrayList<>();
+        /* creeper_spawn_egg -> minecraft:tag */
+        /* elder_guardian_spawn_egg -> minecraft:loot_table */
+        switch (type) {
+            case "minecraft:item":
+                outputs.addAll(munchLootEntryItemJson(object));
+                break;
+            case "minecraft:alternatives":
+                outputs.addAll(munchLootEntryAlternativesJson(object));
+                break;
+            case "minecraft:empty":
+                /* do nothing */
+                break;
+            case "minecraft:loot_table":
+                String json = ClientLootCache.ID_TO_LOOT.get(new Identifier(object.get("name").getAsString()));
+                if (json != null)
+                    outputs.addAll(munchLootSupplierJson(GSON.fromJson(json, JsonElement.class)));
+                break;
+            default:
+                RERUtils.LOGGER.debug("Don't know how to deal with entry of type %s (%s)", type, object);
+                break;
+        }
 
-		return outputs;
-	}
+        if (object.has("conditions")) {
+            for (JsonElement conditionElement : object.get("conditions").getAsJsonArray()) {
+                munchLootCondition(conditionElement, outputs);
+            }
+        }
 
-	public List<LootOutput> munch_loot_pool_json(JsonObject json_pool) {
-		List<LootOutput> outputs = new ArrayList<LootOutput>();
+        if (object.has("functions")) {
+            List<LootOutput> newOutputs = new ArrayList<>();
+            for (JsonElement functionElement : object.get("functions").getAsJsonArray()) {
+                List<LootOutput> list = munchLootFunctions(functionElement, outputs);
+                if (list != null)
+                    newOutputs.addAll(list);
+            }
+            outputs.addAll(newOutputs);
+        }
 
-		JsonArray entries = json_pool.getAsJsonObject().get("entries").getAsJsonArray();
-		for (JsonElement pool_element : entries) {
-			JsonObject entry_object = pool_element.getAsJsonObject();
+        return outputs;
+    }
 
-			outputs.addAll(munch_loot_entry_json(entry_object));
-		}
+    private List<LootOutput> munchLootFunctions(JsonElement lootFunction, List<LootOutput> outputs) {
+        JsonObject functionObject = lootFunction.getAsJsonObject();
+        String kind = functionObject.get("function").getAsString();
 
+        boolean createNew = false;
+        List<LootOutput> newOutputs = null;
+        if (functionObject.has("conditions")) {
+            newOutputs = new ArrayList<>();
+            for (LootOutput output : outputs) {
+                newOutputs.add(output.copy());
+            }
+        }
+        if (kind.equals("minecraft:set_count") && functionObject.has("count") && functionObject.get("count").isJsonPrimitive()) {
+            int count = functionObject.get("count").getAsInt();
+            for (LootOutput output : outputs) {
+                for (EntryStack stack : output.output) {
+                    stack.setAmount(count);
+                }
+                output.setCountText(String.valueOf(count));
+            }
+            createNew = true;
+        } else if (kind.equals("minecraft:set_count") && functionObject.has("count") && functionObject.get("count").isJsonObject()) {
+            String type = new Identifier(functionObject.get("count").getAsJsonObject().get("type").getAsString()).toString();
+            if (type.equalsIgnoreCase("minecraft:uniform")) {
+                int min = MathHelper.floor(functionObject.get("count").getAsJsonObject().get("min").getAsFloat());
+                int max = MathHelper.floor(functionObject.get("count").getAsJsonObject().get("max").getAsFloat());
+                int no = max - min + 1;
+                for (LootOutput output : outputs) {
+                    EntryStack first = output.output.get(0);
+                    while (output.output.size() < no) {
+                        output.output.add(first.copy());
+                    }
+                    for (int i = 0; i < no; i++) {
+                        output.output.get(i).setAmount(min + i);
+                    }
+                    output.setCountText(I18n.translate("rer.loot.range", min, max));
+                }
+                createNew = true;
+            }
+        } else if (kind.equals("minecraft:limit_count") && functionObject.has("limit") && functionObject.get("limit").isJsonObject()) {
+            Integer min = functionObject.get("limit").getAsJsonObject().has("min") ? functionObject.get("limit").getAsJsonObject().get("min").getAsInt() : null;
+            Integer max = functionObject.get("limit").getAsJsonObject().has("max") ? functionObject.get("limit").getAsJsonObject().get("max").getAsInt() : null;
+            for (LootOutput output : outputs) {
+                for (EntryStack stack : output.output) {
+                    if (min != null) {
+                        int amount = stack.isEmpty() ? 0 : stack.getAmount();
+                        if (amount < min) {
+                            stack.setAmount(min);
+                        }
+                    }
+                    if (max != null && stack.getAmount() > max) {
+                        stack.setAmount(max);
+                    }
+                }
+                if (output.output.isEmpty()) {
+                    output.output.add(EntryStack.empty());
+                }
+                if (min != null)
+                    output.addExtraTextCount(I18n.translate("rer.function.atLeast", min));
+                if (max != null)
+                    output.addExtraTextCount(I18n.translate("rer.function.atMost", max));
+            }
+            if (min != null || max != null)
+                createNew = true;
+        } else if (kind.equals("minecraft:copy_nbt") || kind.equals("minecraft:copy_name") || kind.equals("minecraft:explosion_decay") || kind.equals("minecraft:set_contents") || kind.equals("minecraft:copy_state") || kind.equals("minecraft:set_nbt")) {
+            // Ignored
+        } else if (kind.equals("minecraft:apply_bonus") && functionObject.has("enchantment")) {
+            String enchantmentString = functionObject.get("enchantment").getAsString();
+            Enchantment enchantment = Registry.ENCHANTMENT.get(new Identifier(enchantmentString));
+            if (enchantment != null) {
+                for (LootOutput output : outputs) {
+                    output.addExtraTextCount(I18n.translate("rer.function.bonus.enchant", I18n.translate(enchantment.getTranslationKey()).toLowerCase()));
+                }
+                createNew = true;
+            }
+        } else if (kind.equals("minecraft:looting_enchant")) {
+            for (LootOutput output : outputs) {
+                output.addExtraTextCount(I18n.translate("rer.function.bonus.enchant", I18n.translate(Enchantments.LOOTING.getTranslationKey()).toLowerCase()));
+            }
+            createNew = true;
+        } else if (kind.equals("minecraft:furnace_smelt")) {
+            for (LootOutput output : outputs) {
+                output.original = smelt(output.original);
+                for (int i = 0; i < output.output.size(); i++) {
+                    output.output.set(i, smelt(output.output.get(i)));
+                }
+            }
+            createNew = true;
+        } else {
+            RERUtils.LOGGER.debug("Don't know how to deal with function of type %s (%s)", kind, functionObject);
+        }
 
-		return outputs;
-	}
+        if (functionObject.has("conditions")) {
+            for (JsonElement conditionElement : functionObject.get("conditions").getAsJsonArray()) {
+                munchLootCondition(conditionElement, outputs);
+            }
+        }
 
-	public List<LootOutput> munch_loot_supplier_json(JsonElement json_supplier) {
-		List<LootOutput> outputs = new ArrayList<LootOutput>();
+        if (functionObject.has("functions")) {
+            List<LootOutput> newNewOutputs = new ArrayList<>();
+            for (JsonElement functionElement : functionObject.get("functions").getAsJsonArray()) {
+                List<LootOutput> list = munchLootFunctions(functionElement, outputs);
+                if (list != null)
+                    newNewOutputs.addAll(list);
+            }
+            outputs.addAll(newNewOutputs);
+        }
 
-		if (!json_supplier.getAsJsonObject().has("pools")) {
-			return outputs;
-		}
+        return createNew ? newOutputs : null;
+    }
 
-		JsonArray pools = json_supplier.getAsJsonObject().get("pools").getAsJsonArray();
-		for (JsonElement pool_element : pools) {
-			JsonObject pool_object = pool_element.getAsJsonObject();
+    private EntryStack smelt(EntryStack stack) {
+        if (stack.isEmpty() || stack.getType() != EntryStack.Type.ITEM)
+            return stack.copy();
+        ClientWorld world = MinecraftClient.getInstance().world;
+        Optional<SmeltingRecipe> optional = world.getRecipeManager().getFirstMatch(RecipeType.SMELTING, new BasicInventory(stack.getItemStack()), world);
+        if (optional.isPresent()) {
+            ItemStack itemStack = optional.get().getOutput();
+            if (!itemStack.isEmpty()) {
+                EntryStack entryStack = EntryStack.create(itemStack.copy());
+                entryStack.setAmount(stack.getAmount());
+                return entryStack;
+            }
+        }
+        return stack.copy();
+    }
 
-			outputs.addAll(munch_loot_pool_json(pool_object));
-		}
+    public List<LootOutput> munchLootPoolJson(JsonObject poolObject) {
+        List<LootOutput> outputs = new ArrayList<>();
 
-		return outputs;
-	}
+        JsonArray entries = poolObject.getAsJsonObject().get("entries").getAsJsonArray();
+        for (JsonElement entryElement : entries) {
+            JsonObject entryObject = entryElement.getAsJsonObject();
+            outputs.addAll(munchLootEntryJson(entryObject));
+        }
 
-	public List<LootOutput> getOutputs() {
-		if (world == null) {
-			throw new Error("Don't know my world yet?");
-		}
-		if (outputs == null) {
-			LootContext.Builder context_builder = new LootContext.Builder(world);
-			if (!this.fill_context_builder(context_builder, world)) {
-				return new ArrayList<LootOutput>();
-			}
-			LootContext loot_context = context_builder.build(context_type);
-			LootSupplier loot_supplier = loot_context.getLootManager().getSupplier(drop_table_id);
+        if (poolObject.getAsJsonObject().has("conditions")) {
+            for (JsonElement conditionElement : poolObject.getAsJsonObject().get("conditions").getAsJsonArray()) {
+                munchLootCondition(conditionElement, outputs);
+            }
+        }
 
-			JsonElement json_supplier = gson.toJsonTree(loot_supplier);
+        if (poolObject.getAsJsonObject().has("functions")) {
+            List<LootOutput> newOutputs = new ArrayList<>();
+            for (JsonElement functionElement : poolObject.getAsJsonObject().get("functions").getAsJsonArray()) {
+                List<LootOutput> list = munchLootFunctions(functionElement, outputs);
+                if (list != null)
+                    newOutputs.addAll(list);
+            }
+            outputs.addAll(newOutputs);
+        }
 
-			System.out.printf("\n");
-			System.out.printf("input %s\n", this.in_stack);
-			System.out.printf("json: %s\n", json_supplier);
+        return outputs;
+    }
 
-			outputs = munch_loot_supplier_json(json_supplier);
+    public List<LootOutput> munchLootSupplierJson(JsonElement jsonSupplier) {
+        List<LootOutput> outputs = new ArrayList<>();
 
-			for (LootOutput out : outputs) {
-				System.out.println(out);
-			}
-			
+        if (!jsonSupplier.getAsJsonObject().has("pools")) {
+            return outputs;
+        }
 
-		}
-		return outputs;
-	}
+        JsonArray pools = jsonSupplier.getAsJsonObject().get("pools").getAsJsonArray();
+        for (JsonElement poolElement : pools) {
+            JsonObject poolObject = poolElement.getAsJsonObject();
 
-	abstract boolean fill_context_builder(Builder context_builder2, World world);
+            outputs.addAll(munchLootPoolJson(poolObject));
+        }
 
-	public void set_world(ServerWorld w) {
-		world = w;
-	}
+        return outputs;
+    }
+
+    public List<LootOutput> getOutputs() {
+        String json = ClientLootCache.ID_TO_LOOT.get(dropTableId);
+        if (json == null)
+            return Collections.emptyList();
+        if (outputs == null || FabricLoader.getInstance().isDevelopmentEnvironment()) {
+            outputs = munchLootSupplierJson(GSON.fromJson(json, JsonElement.class));
+        }
+        return outputs;
+    }
+
+    abstract boolean fillContextBuilder(Builder contextBuilder, World world);
 }

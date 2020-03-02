@@ -37,7 +37,7 @@ public class RoughlyEnoughResourcesClient implements ClientModInitializer {
                     RERUtils.LOGGER.debug("Received %d Loot Info", size);
                     for (int i = 0; i < size; i++) {
                         Identifier identifier = packetByteBuf.readIdentifier();
-                        String json = packetByteBuf.readString();
+                        String json = packetByteBuf.readString(262144);
                         ClientLootCache.ID_TO_LOOT.put(identifier, json);
                     }
                 });

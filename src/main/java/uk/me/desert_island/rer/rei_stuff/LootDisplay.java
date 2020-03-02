@@ -2,6 +2,7 @@ package uk.me.desert_island.rer.rei_stuff;
 
 import com.google.common.collect.Lists;
 import com.google.gson.*;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import me.shedaniel.rei.api.EntryStack;
 import me.shedaniel.rei.api.RecipeDisplay;
 import net.fabricmc.api.EnvType;
@@ -24,15 +25,19 @@ import net.minecraft.loot.entry.LootEntries;
 import net.minecraft.loot.entry.LootEntry;
 import net.minecraft.loot.function.LootFunction;
 import net.minecraft.loot.function.LootFunctions;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.StringNbtReader;
 import net.minecraft.recipe.RecipeType;
 import net.minecraft.recipe.SmeltingRecipe;
 import net.minecraft.tag.ItemTags;
 import net.minecraft.tag.Tag;
 import net.minecraft.util.BoundedIntUnaryOperator;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.JsonHelper;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.registry.Registry;
 import uk.me.desert_island.rer.RERUtils;
+import uk.me.desert_island.rer.RoughlyEnoughResources;
 import uk.me.desert_island.rer.client.ClientLootCache;
 
 import java.text.DecimalFormat;
@@ -52,9 +57,6 @@ public abstract class LootDisplay implements RecipeDisplay {
     public List<LootOutput> outputs = null;
     public static final NumberFormat FORMAT = new DecimalFormat("#.##");
     public static final NumberFormat FORMAT_MORE = new DecimalFormat("#.####");
-
-    /* from LootManager */
-    private static final Gson GSON = (new GsonBuilder()).registerTypeAdapter(UniformLootTableRange.class, new UniformLootTableRange.Serializer()).registerTypeAdapter(BinomialLootTableRange.class, new BinomialLootTableRange.Serializer()).registerTypeAdapter(ConstantLootTableRange.class, new ConstantLootTableRange.Serializer()).registerTypeAdapter(BoundedIntUnaryOperator.class, new BoundedIntUnaryOperator.Serializer()).registerTypeAdapter(LootPool.class, new LootPool.Serializer()).registerTypeAdapter(LootTable.class, new LootTable.Serializer()).registerTypeHierarchyAdapter(LootEntry.class, new LootEntries.Serializer()).registerTypeHierarchyAdapter(LootFunction.class, new LootFunctions.Factory()).registerTypeHierarchyAdapter(LootCondition.class, new LootConditions.Factory()).registerTypeHierarchyAdapter(LootContext.EntityTarget.class, new LootContext.EntityTarget.Serializer()).create();
 
     @Override
     public List<List<EntryStack>> getInputEntries() {
@@ -228,7 +230,7 @@ public abstract class LootDisplay implements RecipeDisplay {
             case "minecraft:loot_table":
                 String json = ClientLootCache.ID_TO_LOOT.get(new Identifier(object.get("name").getAsString()));
                 if (json != null)
-                    outputs.addAll(munchLootSupplierJson(GSON.fromJson(json, JsonElement.class)));
+                    outputs.addAll(munchLootSupplierJson(RoughlyEnoughResources.GSON.fromJson(json, JsonElement.class)));
                 break;
             case "minecraft:tag":
                 Tag<Item> tag = ItemTags.getContainer().get(new Identifier(object.get("name").getAsString()));
@@ -329,8 +331,29 @@ public abstract class LootDisplay implements RecipeDisplay {
             }
             if (min != null || max != null)
                 createNew = true;
-        } else if (kind.equals("minecraft:copy_nbt") || kind.equals("minecraft:copy_name") || kind.equals("minecraft:explosion_decay") || kind.equals("minecraft:set_contents") || kind.equals("minecraft:copy_state") || kind.equals("minecraft:set_nbt")) {
+        } else if (kind.equals("minecraft:copy_nbt") || kind.equals("minecraft:copy_name") || kind.equals("minecraft:explosion_decay") || kind.equals("minecraft:set_contents") || kind.equals("minecraft:copy_state")) {
             // Ignored
+        } else if (kind.equals("minecraft:set_nbt") && functionObject.has("tag")) {
+            try {
+                CompoundTag tag = StringNbtReader.parse(JsonHelper.getString(functionObject, "tag"));
+                for (LootOutput output : outputs) {
+                    for (int i = 0; i < output.output.size(); i++) {
+                        EntryStack stack = output.output.get(i).copy();
+                        if (!stack.isEmpty() && stack.getType() == EntryStack.Type.ITEM) {
+                            stack.getItemStack().getOrCreateTag().copyFrom(tag);
+                        }
+                        output.output.set(i, stack);
+                    }
+                    EntryStack stack = output.original.copy();
+                    if (!stack.isEmpty() && stack.getType() == EntryStack.Type.ITEM) {
+                        stack.getItemStack().getOrCreateTag().copyFrom(tag);
+                    }
+                    output.original = stack;
+                }
+                createNew = true;
+            } catch (CommandSyntaxException e) {
+                e.printStackTrace();
+            }
         } else if (kind.equals("minecraft:apply_bonus") && functionObject.has("enchantment")) {
             String enchantmentString = functionObject.get("enchantment").getAsString();
             Enchantment enchantment = Registry.ENCHANTMENT.get(new Identifier(enchantmentString));
@@ -442,7 +465,7 @@ public abstract class LootDisplay implements RecipeDisplay {
         if (json == null)
             return Collections.emptyList();
         if (outputs == null || FabricLoader.getInstance().isDevelopmentEnvironment()) {
-            outputs = munchLootSupplierJson(GSON.fromJson(json, JsonElement.class));
+            outputs = munchLootSupplierJson(RoughlyEnoughResources.GSON.fromJson(json, JsonElement.class));
         }
         return outputs;
     }

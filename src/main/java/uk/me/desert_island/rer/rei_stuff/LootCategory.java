@@ -73,7 +73,7 @@ public class LootCategory implements RecipeCategory<LootDisplay> {
             if (t.extraText != null) {
                 lore.add("§e" + StringUtils.capitalize(t.extraText));
             }
-            return new TooltipEntryWidget(0, 0, t.original, lore, t.output).noBackground().entries(stacks);
+            return new TooltipEntryWidget(outputsArea, 0, 0, t.original, lore, t.output).noBackground().entries(stacks);
         })));
         widgets.add(LabelWidget.create(new Point(bounds.getCenterX(), bounds.getMaxY() - 10), display.getLocation().toString()).noShadow().color(ScreenHelper.isDarkModeEnabled() ? -4473925 : -12566464));
         registerWidget(display, widgets, bounds);
@@ -87,8 +87,9 @@ public class LootCategory implements RecipeCategory<LootDisplay> {
     private static class TooltipEntryWidget extends EntryWidget {
         private final EntryStack original;
         private final List<EntryStack> stacks;
+        private final Rectangle outputsArea;
 
-        public TooltipEntryWidget(int x, int y, EntryStack original, List<String> lore, List<EntryStack> stacks) {
+        public TooltipEntryWidget(Rectangle outputsArea, int x, int y, EntryStack original, List<String> lore, List<EntryStack> stacks) {
             super(x, y);
             if (lore != null) {
                 this.original = original.copy().setting(EntryStack.Settings.TOOLTIP_APPEND_EXTRA, entryStack -> lore);
@@ -96,6 +97,7 @@ public class LootCategory implements RecipeCategory<LootDisplay> {
                 this.original = original;
             }
             this.stacks = stacks;
+            this.outputsArea = outputsArea;
         }
 
         @Override
@@ -121,6 +123,11 @@ public class LootCategory implements RecipeCategory<LootDisplay> {
         @Override
         public QueuedTooltip getCurrentTooltip(int mouseX, int mouseY) {
             return original.getTooltip(mouseX, mouseY);
+        }
+
+        @Override
+        public boolean containsMouse(double mouseX, double mouseY) {
+            return super.containsMouse(mouseX, mouseY) && outputsArea.contains(mouseX, mouseY);
         }
     }
 

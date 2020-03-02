@@ -1,6 +1,7 @@
 {
   "rer.worldgen.category": "%s Generation",
-  "rer.loot.category": "Loot Drop",
+  "rer.loot.category": "Block Loot Drop",
+  "rer.entity.loot.category": "Entity Loot Drop",
   "rer.condition.or": "%s or %s",
   "rer.condition.invert": "not %s",
   "rer.condition.enchantment": "with %s",

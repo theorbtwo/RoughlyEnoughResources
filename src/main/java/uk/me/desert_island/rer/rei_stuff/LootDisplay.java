@@ -19,7 +19,6 @@ import net.minecraft.loot.*;
 import net.minecraft.loot.condition.LootCondition;
 import net.minecraft.loot.condition.LootConditions;
 import net.minecraft.loot.context.LootContext;
-import net.minecraft.loot.context.LootContext.Builder;
 import net.minecraft.loot.context.LootContextType;
 import net.minecraft.loot.entry.LootEntries;
 import net.minecraft.loot.entry.LootEntry;
@@ -27,11 +26,12 @@ import net.minecraft.loot.function.LootFunction;
 import net.minecraft.loot.function.LootFunctions;
 import net.minecraft.recipe.RecipeType;
 import net.minecraft.recipe.SmeltingRecipe;
+import net.minecraft.tag.ItemTags;
+import net.minecraft.tag.Tag;
 import net.minecraft.util.BoundedIntUnaryOperator;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.registry.Registry;
-import net.minecraft.world.World;
 import uk.me.desert_island.rer.RERUtils;
 import uk.me.desert_island.rer.client.ClientLootCache;
 
@@ -41,6 +41,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @SuppressWarnings("StatementWithEmptyBody")
 @Environment(EnvType.CLIENT)
@@ -228,6 +229,17 @@ public abstract class LootDisplay implements RecipeDisplay {
                 String json = ClientLootCache.ID_TO_LOOT.get(new Identifier(object.get("name").getAsString()));
                 if (json != null)
                     outputs.addAll(munchLootSupplierJson(GSON.fromJson(json, JsonElement.class)));
+                break;
+            case "minecraft:tag":
+                Tag<Item> tag = ItemTags.getContainer().get(new Identifier(object.get("name").getAsString()));
+                if (tag != null)
+                    outputs.addAll(tag.values().stream().map(item -> {
+                        EntryStack stack = EntryStack.create(item);
+                        LootOutput output = new LootOutput();
+                        output.output = Lists.newArrayList(stack);
+                        output.original = stack.copy();
+                        return output;
+                    }).collect(Collectors.toList()));
                 break;
             default:
                 RERUtils.LOGGER.debug("Don't know how to deal with entry of type %s (%s)", type, object);
@@ -435,5 +447,5 @@ public abstract class LootDisplay implements RecipeDisplay {
         return outputs;
     }
 
-    abstract boolean fillContextBuilder(Builder contextBuilder, World world);
+    //    abstract boolean fillContextBuilder(Builder contextBuilder, World world);
 }

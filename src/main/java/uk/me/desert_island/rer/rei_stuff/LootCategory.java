@@ -56,7 +56,6 @@ public class LootCategory implements RecipeCategory<LootDisplay> {
         List<Widget> widgets = new ArrayList<>();
 
         widgets.add(LabelWidget.create(new Point(bounds.getCenterX(), bounds.getMaxY() - (3 + 8 + 2)), ""));
-        widgets.add(EntryWidget.create(bounds.getMinX() - 1, bounds.getMinY() + 1).entry(display.inputStack));
 
         Rectangle outputsArea = getOutputsArea(bounds);
         widgets.add(new SlotBaseWidget(outputsArea));
@@ -76,9 +75,13 @@ public class LootCategory implements RecipeCategory<LootDisplay> {
             }
             return new TooltipEntryWidget(0, 0, t.original, lore, t.output).noBackground().entries(stacks);
         })));
-        widgets.add(LabelWidget.create(new Point(outputsArea.getCenterX(), bounds.getMaxY() - 10), display.getLocation().toString()).noShadow().color(ScreenHelper.isDarkModeEnabled() ? -4473925 : -12566464));
-
+        widgets.add(LabelWidget.create(new Point(bounds.getCenterX(), bounds.getMaxY() - 10), display.getLocation().toString()).noShadow().color(ScreenHelper.isDarkModeEnabled() ? -4473925 : -12566464));
+        registerWidget(display, widgets, bounds);
         return widgets;
+    }
+
+    protected void registerWidget(LootDisplay display, List<Widget> widgets, Rectangle bounds) {
+        widgets.add(EntryWidget.create(bounds.getMinX() - 1, bounds.getMinY() + 1).entry(display.inputStack));
     }
 
     private static class TooltipEntryWidget extends EntryWidget {
@@ -186,7 +189,7 @@ public class LootCategory implements RecipeCategory<LootDisplay> {
         }
 
         protected int getMaxScrollPosition() {
-            return MathHelper.ceil(widgets.size() / 8f) * 18;
+            return MathHelper.ceil(widgets.size() / (float) ((bounds.width - 7) / 18)) * 18;
         }
 
         @Override

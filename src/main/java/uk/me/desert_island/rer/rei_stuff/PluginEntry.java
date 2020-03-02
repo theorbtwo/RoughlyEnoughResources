@@ -32,6 +32,7 @@ public class PluginEntry implements REIPluginV0 {
             recipeHelper.registerCategory(new WorldGenCategory(type));
         }
         recipeHelper.registerCategory(new LootCategory());
+        recipeHelper.registerCategory(new EntityLootCategory());
     }
 
     @Override
@@ -60,6 +61,7 @@ public class PluginEntry implements REIPluginV0 {
     @Override
     public void registerOthers(RecipeHelper recipeHelper) {
         recipeHelper.removeAutoCraftButton(LootCategory.CATEGORY_ID);
+        recipeHelper.removeAutoCraftButton(EntityLootCategory.CATEGORY_ID);
         for (DimensionType type : Registry.DIMENSION_TYPE) {
             recipeHelper.removeAutoCraftButton(WorldGenCategory.DIMENSION_TYPE_IDENTIFIER_MAP.get(type));
         }

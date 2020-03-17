@@ -6,6 +6,7 @@ import me.shedaniel.math.api.Point;
 import me.shedaniel.math.api.Rectangle;
 import me.shedaniel.rei.api.EntryStack;
 import me.shedaniel.rei.api.RecipeCategory;
+import me.shedaniel.rei.gui.entries.RecipeEntry;
 import me.shedaniel.rei.gui.widget.*;
 import me.shedaniel.rei.impl.ScreenHelper;
 import me.shedaniel.rei.plugin.DefaultPlugin;
@@ -15,6 +16,7 @@ import net.minecraft.block.Block;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.resource.language.I18n;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.dimension.DimensionType;
 import org.apache.commons.lang3.StringUtils;
@@ -50,6 +52,39 @@ public class WorldGenCategory implements RecipeCategory<WorldGenDisplay> {
     @Override
     public EntryStack getLogo() {
         return EntryStack.create(RERUtils.fromDimensionTypeToItemStack(dimension));
+    }
+
+    @Override
+    public RecipeEntry getSimpleRenderer(WorldGenDisplay recipe) {
+        List<EntryStack> stacks = recipe.getOutputEntries();
+        QueuedTooltip[] tooltip = {null};
+        return new RecipeEntry() {
+            private EntryStack getCurrent() {
+                if (stacks.isEmpty()) {
+                    return EntryStack.empty();
+                } else {
+                    return stacks.size() == 1 ? stacks.get(0) : stacks.get(MathHelper.floor((double) (System.currentTimeMillis() / 500L) % (double) stacks.size() / 1.0D));
+                }
+            }
+
+            @Override
+            public QueuedTooltip getTooltip(int mouseX, int mouseY) {
+                return tooltip[0];
+            }
+
+            @Override
+            public int getHeight() {
+                return 22;
+            }
+
+            @Override
+            public void render(Rectangle rectangle, int mouseX, int mouseY, float delta) {
+                EntryStack current = getCurrent();
+                Rectangle innerBounds = new Rectangle(rectangle.x + rectangle.width / 2 - 8, rectangle.y + 3, 16, 16);
+                current.render(innerBounds, mouseX, mouseY, delta);
+                tooltip[0] = innerBounds.contains(mouseX, mouseY) ? current.getTooltip(mouseX, mouseY) : null;
+            }
+        };
     }
 
     @Override

@@ -14,7 +14,6 @@ minecraft {
 }
 
 repositories {
-    maven { url "https://minecraft.curseforge.com/api/maven" }
     maven { url "https://tehnut.info/maven/" }
 	maven { url 'http://maven.modmuss50.me' }
 }
@@ -31,7 +30,7 @@ dependencies {
 
 	// PSA: Some older mods, compiled on Loom 0.2.1, might have outdated Maven POMs.
 	// You may need to force-disable transitiveness on them.
-	
+
     modCompile ("me.shedaniel:RoughlyEnoughItems:${project.rei_version}") {
         exclude group: "net.fabricmc.fabric-api"
     }

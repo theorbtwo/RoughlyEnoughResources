@@ -4,14 +4,19 @@ import com.google.common.collect.Lists;
 import com.mojang.blaze3d.systems.RenderSystem;
 import me.shedaniel.clothconfig2.ClothConfigInitializer;
 import me.shedaniel.clothconfig2.api.ScissorsHandler;
+import me.shedaniel.clothconfig2.api.ScrollingContainer;
 import me.shedaniel.clothconfig2.gui.widget.DynamicEntryListWidget;
-import me.shedaniel.math.api.Point;
-import me.shedaniel.math.api.Rectangle;
+import me.shedaniel.math.Point;
+import me.shedaniel.math.Rectangle;
 import me.shedaniel.math.impl.PointHelper;
 import me.shedaniel.rei.api.EntryStack;
 import me.shedaniel.rei.api.RecipeCategory;
-import me.shedaniel.rei.gui.widget.*;
-import me.shedaniel.rei.impl.ScreenHelper;
+import me.shedaniel.rei.api.widgets.Tooltip;
+import me.shedaniel.rei.api.widgets.Widgets;
+import me.shedaniel.rei.gui.widget.EntryWidget;
+import me.shedaniel.rei.gui.widget.Widget;
+import me.shedaniel.rei.gui.widget.WidgetWithBounds;
+import me.shedaniel.rei.utils.CollectionUtils;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.Element;
@@ -20,8 +25,11 @@ import net.minecraft.client.render.Tessellator;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.VertexFormats;
 import net.minecraft.client.resource.language.I18n;
+import net.minecraft.client.util.NarratorManager;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.item.Items;
+import net.minecraft.text.LiteralText;
+import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.MathHelper;
 import org.apache.commons.lang3.StringUtils;
@@ -29,7 +37,6 @@ import org.apache.commons.lang3.StringUtils;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 @Environment(EnvType.CLIENT)
 public class LootCategory implements RecipeCategory<LootDisplay> {
@@ -51,14 +58,13 @@ public class LootCategory implements RecipeCategory<LootDisplay> {
     }
 
     @Override
-    public List<Widget> setupDisplay(Supplier<LootDisplay> displaySupplier, Rectangle bounds) {
-        final LootDisplay display = displaySupplier.get();
+    public List<Widget> setupDisplay(LootDisplay display, Rectangle bounds) {
         List<Widget> widgets = new ArrayList<>();
 
-        widgets.add(LabelWidget.create(new Point(bounds.getCenterX(), bounds.getMaxY() - (3 + 8 + 2)), ""));
+        widgets.add(Widgets.createLabel(new Point(bounds.getCenterX(), bounds.getMaxY() - (3 + 8 + 2)), NarratorManager.EMPTY));
 
         Rectangle outputsArea = getOutputsArea(bounds);
-        widgets.add(new SlotBaseWidget(outputsArea));
+        widgets.add(Widgets.createSlotBase(outputsArea));
         widgets.add(new ScrollableSlotsWidget(outputsArea, map(display.getOutputs(), t -> {
             List<EntryStack> stacks = new ArrayList<>();
             for (EntryStack stack : t.output) {
@@ -73,15 +79,15 @@ public class LootCategory implements RecipeCategory<LootDisplay> {
             if (t.extraText != null) {
                 lore.add("§e" + StringUtils.capitalize(t.extraText));
             }
-            return new TooltipEntryWidget(outputsArea, 0, 0, t.original, lore, t.output).noBackground().entries(stacks);
+            return new TooltipEntryWidget(outputsArea, 0, 0, t.original, CollectionUtils.map(lore, LiteralText::new), t.output).noBackground().entries(stacks);
         })));
-        widgets.add(LabelWidget.create(new Point(bounds.getCenterX(), bounds.getMaxY() - 10), display.getLocation().toString()).noShadow().color(ScreenHelper.isDarkModeEnabled() ? -4473925 : -12566464));
+        widgets.add(Widgets.createLabel(new Point(bounds.getCenterX(), bounds.getMaxY() - 10), new LiteralText(display.getLocation().toString())).noShadow().color(-12566464, -4473925));
         registerWidget(display, widgets, bounds);
         return widgets;
     }
 
     protected void registerWidget(LootDisplay display, List<Widget> widgets, Rectangle bounds) {
-        widgets.add(EntryWidget.create(bounds.getMinX() - 1, bounds.getMinY() + 1).entry(display.inputStack));
+        widgets.add(Widgets.createSlot(new Point(bounds.getMinX() - 1, bounds.getMinY() + 1)).entry(display.inputStack));
     }
 
     private static class TooltipEntryWidget extends EntryWidget {
@@ -89,7 +95,7 @@ public class LootCategory implements RecipeCategory<LootDisplay> {
         private final List<EntryStack> stacks;
         private final Rectangle outputsArea;
 
-        public TooltipEntryWidget(Rectangle outputsArea, int x, int y, EntryStack original, List<String> lore, List<EntryStack> stacks) {
+        public TooltipEntryWidget(Rectangle outputsArea, int x, int y, EntryStack original, List<Text> lore, List<EntryStack> stacks) {
             super(x, y);
             if (lore != null) {
                 this.original = original.copy().setting(EntryStack.Settings.TOOLTIP_APPEND_EXTRA, entryStack -> lore);
@@ -101,28 +107,29 @@ public class LootCategory implements RecipeCategory<LootDisplay> {
         }
 
         @Override
-        protected void drawCurrentEntry(int mouseX, int mouseY, float delta) {
+        protected void drawCurrentEntry(MatrixStack matrices, int mouseX, int mouseY, float delta) {
             EntryStack entry = getCurrentEntry();
             entry.setZ(100);
             Rectangle innerBounds = getInnerBounds();
-            entry.render(innerBounds, mouseX, mouseY, delta);
+            entry.render(matrices, innerBounds, mouseX, mouseY, delta);
             if (stacks.isEmpty())
                 return;
             @SuppressWarnings("IntegerDivisionInFloatingPointContext")
             EntryStack stack = stacks.get(stacks.size() == 1 ? 0 : MathHelper.floor((System.currentTimeMillis() / 500 % (double) stacks.size()) / 1f));
             if (stack.getAmount() == 1)
                 return;
-            MatrixStack matrixStack = new MatrixStack();
+            matrices.push();
             String string = String.valueOf(stack.getAmount());
-            matrixStack.translate(0.0D, 0.0D, getZ() + 400.0F);
+            matrices.translate(0.0D, 0.0D, getZ() + 400.0F);
             VertexConsumerProvider.Immediate immediate = VertexConsumerProvider.immediate(Tessellator.getInstance().getBuffer());
-            font.draw(string, (float) (innerBounds.x + 19 - 2 - font.getStringWidth(string)), (float) (innerBounds.y + 6 + 3), 16777215, true, matrixStack.peek().getModel(), immediate, false, 0, 15728880);
+            font.draw(string, (float) (innerBounds.x + 19 - 2 - font.getStringWidth(string)), (float) (innerBounds.y + 6 + 3), 16777215, true, matrices.peek().getModel(), immediate, false, 0, 15728880);
             immediate.draw();
+            matrices.pop();
         }
 
         @Override
-        public QueuedTooltip getCurrentTooltip(int mouseX, int mouseY) {
-            return original.getTooltip(mouseX, mouseY);
+        public Tooltip getCurrentTooltip(Point mouse) {
+            return original.getTooltip(mouse);
         }
 
         @Override
@@ -205,7 +212,7 @@ public class LootCategory implements RecipeCategory<LootDisplay> {
         }
 
         @Override
-        public void render(int mouseX, int mouseY, float delta) {
+        public void render(MatrixStack matrices, int mouseX, int mouseY, float delta) {
             updatePosition(delta);
             Rectangle innerBounds = new Rectangle(bounds.x + 1, bounds.y + 1, bounds.width - 7, bounds.height - 2);
             ScissorsHandler.INSTANCE.scissor(innerBounds);
@@ -217,7 +224,7 @@ public class LootCategory implements RecipeCategory<LootDisplay> {
                         break;
                     EntryWidget widget = widgets.get(index);
                     widget.getBounds().setLocation(bounds.x + 1 + x * 18, (int) (bounds.y + 1 + y * 18 - scroll));
-                    widget.render(mouseX, mouseY, delta);
+                    widget.render(matrices, mouseX, mouseY, delta);
                 }
             }
             ScissorsHandler.INSTANCE.removeLastScissor();
@@ -249,7 +256,7 @@ public class LootCategory implements RecipeCategory<LootDisplay> {
                 height = Math.max(10, height);
                 int minY = Math.min(Math.max((int) scroll * (this.getBounds().height - 2 - height) / maxScroll + getBounds().y + 1, getBounds().y + 1), getBounds().getMaxY() - 1 - height);
 
-                boolean hovered = new Rectangle(scrollbarPositionMinX, minY, scrollbarPositionMaxX - scrollbarPositionMinX, height).contains(PointHelper.fromMouse());
+                boolean hovered = new Rectangle(scrollbarPositionMinX, minY, scrollbarPositionMaxX - scrollbarPositionMinX, height).contains(PointHelper.ofMouse());
                 int bottomC = hovered ? 168 : 128;
                 int topC = hovered ? 222 : 172;
 
@@ -281,7 +288,7 @@ public class LootCategory implements RecipeCategory<LootDisplay> {
 
         private void updatePosition(float delta) {
             double[] target = new double[]{this.target};
-            this.scroll = ClothConfigInitializer.handleScrollingPosition(target, this.scroll, this.getMaxScroll(), delta, this.start, this.duration);
+            this.scroll = ScrollingContainer.handleScrollingPosition(target, this.scroll, this.getMaxScroll(), delta, this.start, this.duration);
             this.target = target[0];
         }
 

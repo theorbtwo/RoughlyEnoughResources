@@ -80,15 +80,15 @@ public class ClientWorldGenState {
             return 0;
         }
 
-        double block_count = levelCount.get(y);
+        double blockCount = levelCount.get(y);
 
-        double total_count = totalCountsAtLevelsMap.getOrDefault(y, (long) 1);
+        double totalCount = totalCountsAtLevelsMap.getOrDefault(y, (long) 1);
 
-        if (total_count == 0) {
+        if (totalCount == 0) {
             return 0;
         }
 
-        return block_count / total_count;
+        return blockCount / totalCount;
     }
 
     public double getMaxPortion(Block block) {

@@ -3,9 +3,8 @@ package uk.me.desert_island.rer.mixin;
 import net.minecraft.block.Block;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.ChunkRegion;
+import net.minecraft.world.gen.StructureAccessor;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -18,8 +17,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Mixin(ChunkGenerator.class)
 public class MixinChunkGenerator {
-    @Inject(at = @At("RETURN"), method = "generateFeatures(Lnet/minecraft/world/ChunkRegion;)V")
-    private void generateFeatures(ChunkRegion region, CallbackInfo info) {
+    @Inject(at = @At("RETURN"), method = "generateFeatures")
+    private void generateFeatures(ChunkRegion region, StructureAccessor structureAccessor, CallbackInfo ci) {
         long startTime = System.nanoTime();
         int centerChunkX = region.getCenterChunkX();
         int centerChunkZ = region.getCenterChunkZ();

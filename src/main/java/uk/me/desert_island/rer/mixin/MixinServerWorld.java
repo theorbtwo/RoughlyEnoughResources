@@ -2,19 +2,17 @@
 
 package uk.me.desert_island.rer.mixin;
 
+import net.minecraft.class_5268;
+import net.minecraft.class_5269;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.WorldGenerationProgressListener;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.profiler.Profiler;
 import net.minecraft.world.PersistentStateManager;
 import net.minecraft.world.World;
-import net.minecraft.world.WorldSaveHandler;
-import net.minecraft.world.chunk.ChunkManager;
-import net.minecraft.world.dimension.Dimension;
 import net.minecraft.world.dimension.DimensionType;
-import net.minecraft.world.level.LevelProperties;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import net.minecraft.world.gen.chunk.ChunkGenerator;
+import net.minecraft.world.level.storage.LevelStorage;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -22,17 +20,16 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import uk.me.desert_island.rer.WorldGenState;
 
 import java.util.concurrent.Executor;
-import java.util.function.BiFunction;
+import java.util.function.Supplier;
 
 @Mixin(ServerWorld.class)
 public abstract class MixinServerWorld extends World {
-    protected MixinServerWorld(LevelProperties levelProperties, DimensionType dimensionType, BiFunction<World, Dimension, ChunkManager> biFunction, Profiler profiler, boolean boolean_1) {
-        super(levelProperties, dimensionType, biFunction, profiler, boolean_1);
+    protected MixinServerWorld(class_5269 arg, DimensionType dimensionType, Supplier<Profiler> supplier, boolean bl, boolean bl2, long l) {
+        super(arg, dimensionType, supplier, bl, bl2, l);
     }
 
-    @Inject(at = @At("RETURN"),
-            method = "<init>(Lnet/minecraft/server/MinecraftServer;Ljava/util/concurrent/Executor;Lnet/minecraft/world/WorldSaveHandler;Lnet/minecraft/world/level/LevelProperties;Lnet/minecraft/world/dimension/DimensionType;Lnet/minecraft/util/profiler/Profiler;Lnet/minecraft/server/WorldGenerationProgressListener;)V")
-    private void constructor(MinecraftServer server, Executor executor, WorldSaveHandler oldWorldSaveHandler, LevelProperties levelProperties, DimensionType dimensionType, Profiler profiler, WorldGenerationProgressListener worldGenerationProgressListener, CallbackInfo ci) {
+    @Inject(at = @At("RETURN"), method = "<init>")
+    private void constructor(MinecraftServer minecraftServer, Executor workerExecutor, LevelStorage.Session session, class_5268 properties, DimensionType dimensionType, WorldGenerationProgressListener worldGenerationProgressListener, ChunkGenerator chunkGenerator, boolean bl, long l, CallbackInfo ci) {
         PersistentStateManager psm = ((ServerWorld) (Object) this).getPersistentStateManager();
         WorldGenState.registerPsm(psm, dimensionType);
     }

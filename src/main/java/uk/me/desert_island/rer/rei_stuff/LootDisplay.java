@@ -1,7 +1,9 @@
 package uk.me.desert_island.rer.rei_stuff;
 
 import com.google.common.collect.Lists;
-import com.google.gson.*;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import me.shedaniel.rei.api.EntryStack;
 import me.shedaniel.rei.api.RecipeDisplay;
@@ -16,22 +18,13 @@ import net.minecraft.enchantment.Enchantments;
 import net.minecraft.inventory.BasicInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.loot.*;
-import net.minecraft.loot.condition.LootCondition;
-import net.minecraft.loot.condition.LootConditions;
-import net.minecraft.loot.context.LootContext;
 import net.minecraft.loot.context.LootContextType;
-import net.minecraft.loot.entry.LootEntries;
-import net.minecraft.loot.entry.LootEntry;
-import net.minecraft.loot.function.LootFunction;
-import net.minecraft.loot.function.LootFunctions;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.StringNbtReader;
 import net.minecraft.recipe.RecipeType;
 import net.minecraft.recipe.SmeltingRecipe;
 import net.minecraft.tag.ItemTags;
 import net.minecraft.tag.Tag;
-import net.minecraft.util.BoundedIntUnaryOperator;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.JsonHelper;
 import net.minecraft.util.math.MathHelper;
@@ -52,7 +45,7 @@ import java.util.stream.Collectors;
 @Environment(EnvType.CLIENT)
 public abstract class LootDisplay implements RecipeDisplay {
     public EntryStack inputStack;
-    public Identifier dropTableId;
+    public Identifier lootTableId;
     public LootContextType contextType;
     public List<LootOutput> outputs = null;
     public static final NumberFormat FORMAT = new DecimalFormat("#.##");
@@ -269,7 +262,7 @@ public abstract class LootDisplay implements RecipeDisplay {
 
     private List<LootOutput> munchLootFunctions(JsonElement lootFunction, List<LootOutput> outputs) {
         JsonObject functionObject = lootFunction.getAsJsonObject();
-        String kind = functionObject.get("function").getAsString();
+        String kind = new Identifier(functionObject.get("function").getAsString()).toString();
 
         boolean createNew = false;
         List<LootOutput> newOutputs = null;
@@ -461,7 +454,7 @@ public abstract class LootDisplay implements RecipeDisplay {
     }
 
     public List<LootOutput> getOutputs() {
-        String json = ClientLootCache.ID_TO_LOOT.get(dropTableId);
+        String json = ClientLootCache.ID_TO_LOOT.get(lootTableId);
         if (json == null)
             return Collections.emptyList();
         if (outputs == null || FabricLoader.getInstance().isDevelopmentEnvironment()) {

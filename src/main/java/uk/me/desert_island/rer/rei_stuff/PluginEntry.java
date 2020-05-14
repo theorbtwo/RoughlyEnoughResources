@@ -42,7 +42,7 @@ public class PluginEntry implements REIPluginV0 {
                 recipeHelper.registerDisplay(new WorldGenDisplay(RERUtils.fromBlockToItemStackWithText(block), block, type));
             }
 
-            Identifier dropTableId = block.getDropTableId();
+            Identifier dropTableId = block.getLootTableId();
 
             if (dropTableId != null && dropTableId != LootTables.EMPTY) {
                 recipeHelper.registerDisplay(new BlockLootDisplay(block));
@@ -80,7 +80,7 @@ public class PluginEntry implements REIPluginV0 {
                 return ActionResult.FAIL;
             }
             if (display instanceof LootDisplay) {
-                if (!ClientLootCache.ID_TO_LOOT.containsKey(((LootDisplay) display).dropTableId) || ((LootDisplay) display).getOutputs().isEmpty())
+                if (!ClientLootCache.ID_TO_LOOT.containsKey(((LootDisplay) display).lootTableId) || ((LootDisplay) display).getOutputs().isEmpty())
                     return ActionResult.FAIL;
             }
             return ActionResult.PASS;

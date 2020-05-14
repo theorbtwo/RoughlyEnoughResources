@@ -1,17 +1,18 @@
 package uk.me.desert_island.rer;
 
-import me.shedaniel.math.api.Point;
-import me.shedaniel.math.api.Rectangle;
+import me.shedaniel.math.Point;
+import me.shedaniel.math.Rectangle;
 import me.shedaniel.rei.api.EntryStack;
-import me.shedaniel.rei.gui.widget.QueuedTooltip;
+import me.shedaniel.rei.api.REIHelper;
+import me.shedaniel.rei.api.widgets.Tooltip;
 import me.shedaniel.rei.impl.RenderingEntry;
-import me.shedaniel.rei.impl.ScreenHelper;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.FluidBlock;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
+import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -93,17 +94,17 @@ public class RERUtils {
         if (stack.isEmpty()) {
             return new RenderingEntry() {
                 @Override
-                public void render(Rectangle rectangle, int mouseX, int mouseY, float delta) {
+                public void render(MatrixStack matrices, Rectangle rectangle, int mouseX, int mouseY, float delta) {
                     MinecraftClient instance = MinecraftClient.getInstance();
                     TextRenderer font = instance.textRenderer;
                     String text = "?";
                     int width = font.getStringWidth(text);
-                    font.draw(text, rectangle.getCenterX() - width / 2f + 0.2f, rectangle.getCenterY() - font.fontHeight / 2f + 1f, ScreenHelper.isDarkModeEnabled() ? -4473925 : -12566464);
+                    font.draw(matrices, text, rectangle.getCenterX() - width / 2f + 0.2f, rectangle.getCenterY() - font.fontHeight / 2f + 1f, REIHelper.getInstance().isDarkThemeEnabled() ? -4473925 : -12566464);
                 }
 
                 @Override
-                public @Nullable QueuedTooltip getTooltip(int mouseX, int mouseY) {
-                    return QueuedTooltip.create(new Point(mouseX, mouseY), block.getName().asFormattedString());
+                public @Nullable Tooltip getTooltip(Point mouse) {
+                    return Tooltip.create(mouse, block.getName());
                 }
             };
         }

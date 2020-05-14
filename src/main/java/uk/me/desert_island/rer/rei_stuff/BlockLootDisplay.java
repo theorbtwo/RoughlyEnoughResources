@@ -16,7 +16,7 @@ public class BlockLootDisplay extends LootDisplay {
     public BlockLootDisplay(Block block) {
         this.inputBlock = block;
         this.inputStack = RERUtils.fromBlockToItemStack(block);
-        this.dropTableId = block.getDropTableId();
+        this.lootTableId = block.getLootTableId();
         this.contextType = LootContextTypes.BLOCK;
     }
 

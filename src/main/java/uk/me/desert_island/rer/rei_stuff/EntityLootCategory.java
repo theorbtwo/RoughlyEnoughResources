@@ -1,21 +1,17 @@
 package uk.me.desert_island.rer.rei_stuff;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import me.shedaniel.clothconfig2.api.ScissorsHandler;
-import me.shedaniel.math.api.Rectangle;
+import me.shedaniel.math.Point;
+import me.shedaniel.math.Rectangle;
 import me.shedaniel.rei.api.EntryStack;
-import me.shedaniel.rei.gui.widget.EntryWidget;
-import me.shedaniel.rei.gui.widget.SlotBaseWidget;
+import me.shedaniel.rei.api.widgets.Widgets;
 import me.shedaniel.rei.gui.widget.Widget;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.entity.EntityRenderDispatcher;
 import net.minecraft.client.resource.language.I18n;
-import net.minecraft.client.util.math.Matrix4f;
-import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.client.util.math.Vector3f;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.item.Items;
 import net.minecraft.util.Identifier;
@@ -49,43 +45,26 @@ public class EntityLootCategory extends LootCategory {
     @Override
     protected void registerWidget(LootDisplay display, List<Widget> widgets, Rectangle bounds) {
         EntityLootDisplay entityLootDisplay = (EntityLootDisplay) display;
-        widgets.add(new EntityRendererWidget(new Rectangle(bounds.getMinX(), bounds.getMinY(), 54, 54), entityLootDisplay.getInputEntity()));
-        widgets.add(EntryWidget.create(bounds.getMinX() + 54 - 18, bounds.getMinY() + 1).entry(entityLootDisplay.inputStack).noBackground().noHighlight());
-    }
-
-    private static class EntityRendererWidget extends SlotBaseWidget {
-        private final Entity entity;
-
-        public EntityRendererWidget(Rectangle bounds, EntityType<?> inputEntity) {
-            super(bounds);
-            this.entity = inputEntity.create(MinecraftClient.getInstance().world);
-        }
-
-        @Override
-        public void render(int mouseX, int mouseY, float delta) {
-            super.render(mouseX, mouseY, delta);
-            Rectangle bounds = getBounds();
-            ScissorsHandler.INSTANCE.scissor(new Rectangle(bounds.x + 1, bounds.y + 1, bounds.width - 2, bounds.height - 2));
-            float f = (float) Math.atan((bounds.getCenterX() - mouseX) / 40.0F);
-            float g = (float) Math.atan((bounds.getCenterY() - mouseY) / 40.0F);
+        Rectangle entityBounds = new Rectangle(bounds.getMinX(), bounds.getMinY(), 54, 54);
+        Entity entity = entityLootDisplay.getInputEntity().create(MinecraftClient.getInstance().world);
+        widgets.add(Widgets.createSlotBase(entityBounds));
+        widgets.add(Widgets.createDrawableWidget((helper, matrices, mouseX, mouseY, delta) -> {
+            ScissorsHandler.INSTANCE.scissor(new Rectangle(entityBounds.x + 1, entityBounds.y + 1, entityBounds.width - 2, entityBounds.height - 2));
+            float f = (float) Math.atan((entityBounds.getCenterX() - mouseX) / 40.0F);
+            float g = (float) Math.atan((entityBounds.getCenterY() - mouseY) / 40.0F);
             float size = 32;
             if (Math.max(entity.getWidth(), entity.getHeight()) > 1.0) {
                 size /= Math.max(entity.getWidth(), entity.getHeight());
             }
-            RenderSystem.pushMatrix();
-            Matrix4f matrix4f = new Matrix4f();
-            matrix4f.loadIdentity();
-            matrix4f.multiply(Matrix4f.scale(5F, -0.5F, 0.5F));
-            RenderSystem.setupLevelDiffuseLighting(matrix4f);
-            RenderSystem.translatef(bounds.getCenterX(), bounds.getCenterY() + 20, 1050.0F);
-            RenderSystem.scalef(1.0F, 1.0F, -1.0F);
-            MatrixStack matrixStack = new MatrixStack();
-            matrixStack.translate(0.0D, 0.0D, 1000.0D);
-            matrixStack.scale(size, size, size);
+            matrices.push();
+            matrices.translate(entityBounds.getCenterX(), entityBounds.getCenterY() + 20, 1050.0);
+            matrices.scale(1, 1, -1);
+            matrices.translate(0.0D, 0.0D, 1000.0D);
+            matrices.scale(size, size, size);
             Quaternion quaternion = Vector3f.POSITIVE_Z.getDegreesQuaternion(180.0F);
             Quaternion quaternion2 = Vector3f.POSITIVE_X.getDegreesQuaternion(g * 20.0F);
             quaternion.hamiltonProduct(quaternion2);
-            matrixStack.multiply(quaternion);
+            matrices.multiply(quaternion);
             float i = entity.yaw;
             float j = entity.pitch;
             float h = 0, k = 0, l = 0;
@@ -104,7 +83,7 @@ public class EntityLootCategory extends LootCategory {
             entityRenderDispatcher.setRotation(quaternion2);
             entityRenderDispatcher.setRenderShadows(false);
             VertexConsumerProvider.Immediate immediate = MinecraftClient.getInstance().getBufferBuilders().getEntityVertexConsumers();
-            entityRenderDispatcher.render(entity, 0.0D, 0.0D, 0.0D, 0.0F, 1.0F, matrixStack, immediate, 15728880);
+            entityRenderDispatcher.render(entity, 0.0D, 0.0D, 0.0D, 0.0F, 1.0F, matrices, immediate, 15728880);
             immediate.draw();
             entityRenderDispatcher.setRenderShadows(true);
             entity.yaw = i;
@@ -114,12 +93,9 @@ public class EntityLootCategory extends LootCategory {
                 ((LivingEntity) entity).prevHeadYaw = k;
                 ((LivingEntity) entity).headYaw = l;
             }
-            Matrix4f matrix4f2 = new Matrix4f();
-            matrix4f2.loadIdentity();
-            matrix4f2.multiply(Matrix4f.scale(3F, -1F, 2F));
-            RenderSystem.setupLevelDiffuseLighting(matrix4f2);
-            RenderSystem.popMatrix();
+            matrices.pop();
             ScissorsHandler.INSTANCE.removeLastScissor();
-        }
+        }));
+        widgets.add(Widgets.createSlot(new Point(bounds.getMinX() + 54 - 18, bounds.getMinY() + 1)).entry(entityLootDisplay.inputStack).disableBackground().disableHighlight());
     }
 }

@@ -6,7 +6,8 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.block.Block;
 import net.minecraft.util.Identifier;
-import net.minecraft.world.dimension.DimensionType;
+import net.minecraft.util.registry.RegistryKey;
+import net.minecraft.world.World;
 
 import java.util.Collections;
 import java.util.List;
@@ -15,16 +16,16 @@ import java.util.List;
 public class WorldGenDisplay implements RecipeDisplay {
     private final EntryStack outputStack;
     private final Block outputBlock;
-    private final DimensionType dimension;
+    private final RegistryKey<World> world;
 
-    public WorldGenDisplay(EntryStack outputStack, Block outputBlock, DimensionType dimension) {
+    public WorldGenDisplay(EntryStack outputStack, Block outputBlock, RegistryKey<World> world) {
         this.outputStack = outputStack;
         this.outputBlock = outputBlock;
-        this.dimension = dimension;
+        this.world = world;
     }
 
-    public DimensionType getDimension() {
-        return dimension;
+    public RegistryKey<World> getWorld() {
+        return world;
     }
 
     public Block getOutputBlock() {
@@ -43,7 +44,7 @@ public class WorldGenDisplay implements RecipeDisplay {
 
     @Override
     public Identifier getRecipeCategory() {
-        return WorldGenCategory.DIMENSION_TYPE_IDENTIFIER_MAP.get(dimension);
+        return WorldGenCategory.WORLD_IDENTIFIER_MAP.get(world);
     }
 
 

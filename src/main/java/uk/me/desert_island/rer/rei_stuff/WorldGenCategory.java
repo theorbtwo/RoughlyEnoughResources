@@ -1,7 +1,6 @@
 package uk.me.desert_island.rer.rei_stuff;
 
 import com.google.common.collect.Maps;
-import com.mojang.blaze3d.systems.RenderSystem;
 import me.shedaniel.math.Point;
 import me.shedaniel.math.Rectangle;
 import me.shedaniel.rei.api.EntryStack;
@@ -12,11 +11,9 @@ import me.shedaniel.rei.api.widgets.Tooltip;
 import me.shedaniel.rei.api.widgets.Widgets;
 import me.shedaniel.rei.gui.entries.RecipeEntry;
 import me.shedaniel.rei.gui.widget.Widget;
-import me.shedaniel.rei.plugin.DefaultPlugin;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.block.Block;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawableHelper;
 import net.minecraft.client.resource.language.I18n;
 import net.minecraft.client.util.math.MatrixStack;
@@ -24,7 +21,8 @@ import net.minecraft.text.LiteralText;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.registry.Registry;
-import net.minecraft.world.dimension.DimensionType;
+import net.minecraft.util.registry.RegistryKey;
+import net.minecraft.world.World;
 import org.apache.commons.lang3.StringUtils;
 import uk.me.desert_island.rer.RERUtils;
 import uk.me.desert_island.rer.client.ClientWorldGenState;
@@ -39,24 +37,24 @@ import java.util.function.Function;
 public class WorldGenCategory implements RecipeCategory<WorldGenDisplay> {
     @Override
     public Identifier getIdentifier() {
-        return DIMENSION_TYPE_IDENTIFIER_MAP.get(dimension);
+        return WORLD_IDENTIFIER_MAP.get(world);
     }
 
-    static final Map<DimensionType, Identifier> DIMENSION_TYPE_IDENTIFIER_MAP = Maps.newHashMap();
-    private final DimensionType dimension;
+    static final Map<RegistryKey<World>, Identifier> WORLD_IDENTIFIER_MAP = Maps.newHashMap();
+    private final RegistryKey<World> world;
 
-    public WorldGenCategory(DimensionType dimension) {
-        DIMENSION_TYPE_IDENTIFIER_MAP.put(dimension, new Identifier("roughlyenoughresources", Registry.DIMENSION_TYPE.getId(dimension).getPath() + "_worldgen_category"));
-        this.dimension = dimension;
+    public WorldGenCategory(RegistryKey<World> world) {
+        WORLD_IDENTIFIER_MAP.put(world, new Identifier("roughlyenoughresources", world.getValue().getPath() + "_worldgen_category"));
+        this.world = world;
     }
 
-    public DimensionType getDimension() {
-        return dimension;
+    public RegistryKey<World> getWorld() {
+        return world;
     }
 
     @Override
     public EntryStack getLogo() {
-        return EntryStack.create(RERUtils.fromDimensionTypeToItemStack(dimension));
+        return EntryStack.create(RERUtils.fromWorldToItemStack(world));
     }
 
     @Override
@@ -94,7 +92,7 @@ public class WorldGenCategory implements RecipeCategory<WorldGenDisplay> {
 
     @Override
     public String getCategoryName() {
-        return I18n.translate("rer.worldgen.category", mapAndJoinToString(Registry.DIMENSION_TYPE.getId(dimension).getPath().split("_"), StringUtils::capitalize, " "));
+        return I18n.translate("rer.worldgen.category", mapAndJoinToString(world.getValue().getPath().split("_"), StringUtils::capitalize, " "));
     }
 
     public static <T> String mapAndJoinToString(T[] list, Function<T, String> function, String separator) {
@@ -113,16 +111,14 @@ public class WorldGenCategory implements RecipeCategory<WorldGenDisplay> {
 
         List<Widget> widgets = new LinkedList<>();
         widgets.add(Widgets.createSlotBase(new Rectangle(bounds.x + 1, bounds.y + 2, 130, 62)));
-        Panel recipeBaseWidget;
-        widgets.add(recipeBaseWidget = Widgets.createRecipeBase(bounds));
         widgets.add(Widgets.createDrawableWidget((helper, matrices, mouseX, mouseY, delta) -> {
-            ClientWorldGenState worldGenState = ClientWorldGenState.byDimension(display.getDimension());
+            ClientWorldGenState worldGenState = ClientWorldGenState.byWorld(display.getWorld());
 
             int graphHeight = 60;
             double maxPortion = worldGenState.getMaxPortion(block);
 
-//            RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
-//            MinecraftClient.getInstance().getTextureManager().bindTexture(DefaultPlugin.getDisplayTexture());
+            //            RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+            //            MinecraftClient.getInstance().getTextureManager().bindTexture(DefaultPlugin.getDisplayTexture());
 
             int mouseHeight = mouseX - startPoint.x;
 
@@ -143,7 +139,7 @@ public class WorldGenCategory implements RecipeCategory<WorldGenDisplay> {
                         /*color */ 0xff000000);
             }
 
-            if (recipeBaseWidget.containsMouse(mouseX, mouseY) && mouseHeight >= 0 && mouseHeight < 128) {
+            if (bounds.contains(mouseX, mouseY) && mouseHeight >= 0 && mouseHeight < 128) {
                 double portion = worldGenState.getPortionAtHeight(block, mouseHeight);
                 double rel_portion;
                 if (maxPortion == 0) {

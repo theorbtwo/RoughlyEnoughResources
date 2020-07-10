@@ -7,8 +7,8 @@ import net.minecraft.block.Block;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
-import net.minecraft.world.dimension.Dimension;
-import net.minecraft.world.dimension.DimensionType;
+import net.minecraft.util.registry.RegistryKey;
+import net.minecraft.world.World;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -16,16 +16,16 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Environment(EnvType.CLIENT)
 public class ClientWorldGenState {
-    public static Map<DimensionType, ClientWorldGenState> dimensionTypeStateMap = new HashMap<>();
+    public static Map<RegistryKey<World>, ClientWorldGenState> dimensionTypeStateMap = new HashMap<>();
 
     public Map<Block, Map<Integer, Long>> levelCountsMap = new ConcurrentHashMap<>();
     public Map<Integer, Long> totalCountsAtLevelsMap = new ConcurrentHashMap<>(128);
 
-    public static ClientWorldGenState byDimension(Dimension dim) {
-        return byDimension(dim.getType());
+    public static ClientWorldGenState byWorld(World world) {
+        return byWorld(world.getRegistryKey());
     }
 
-    public static ClientWorldGenState byDimension(DimensionType dim) {
+    public static ClientWorldGenState byWorld(RegistryKey<World> dim) {
         ClientWorldGenState state = dimensionTypeStateMap.get(dim);
         if (state == null) {
             dimensionTypeStateMap.put(dim, new ClientWorldGenState());

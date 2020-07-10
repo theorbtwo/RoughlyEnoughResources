@@ -4,7 +4,8 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.ClientConnection;
 import net.minecraft.server.PlayerManager;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.world.dimension.DimensionType;
+import net.minecraft.util.registry.RegistryKey;
+import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -16,12 +17,11 @@ import java.util.Collections;
 
 @Mixin(PlayerManager.class)
 public class MixinPlayerManager {
-    @Inject(method = "onPlayerConnect",
-            at = @At(value = "RETURN"))
+    @Inject(method = "onPlayerConnect", at = @At(value = "RETURN"))
     private void onPlayerConnect(ClientConnection connection, ServerPlayerEntity player, CallbackInfo ci) {
-        for (DimensionType dimensionType : WorldGenState.persistentStateManagerMap.keySet()) {
-            WorldGenState state = WorldGenState.byDimension(dimensionType);
-            state.sendToPlayer(player, state.toTag(new CompoundTag()), dimensionType);
+        for (RegistryKey<World> world : WorldGenState.persistentStateManagerMap.keySet()) {
+            WorldGenState state = WorldGenState.byWorld(world);
+            state.sendToPlayer(player, state.toTag(new CompoundTag()), world);
         }
         RoughlyEnoughResources.sendLootToPlayers(((PlayerManager) (Object) this).getServer(), Collections.singletonList(player));
     }

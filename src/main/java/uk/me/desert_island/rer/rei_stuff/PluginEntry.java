@@ -5,12 +5,14 @@ import me.shedaniel.rei.api.plugins.REIPluginV0;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.block.Block;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.EntityType;
 import net.minecraft.loot.LootTables;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
-import net.minecraft.world.dimension.DimensionType;
+import net.minecraft.util.registry.RegistryKey;
+import net.minecraft.world.World;
 import uk.me.desert_island.rer.RERUtils;
 import uk.me.desert_island.rer.client.ClientLootCache;
 import uk.me.desert_island.rer.client.ClientWorldGenState;
@@ -28,8 +30,8 @@ public class PluginEntry implements REIPluginV0 {
 
     @Override
     public void registerPluginCategories(RecipeHelper recipeHelper) {
-        for (DimensionType type : Registry.DIMENSION_TYPE) {
-            recipeHelper.registerCategory(new WorldGenCategory(type));
+        for (RegistryKey<World> world : MinecraftClient.getInstance().getNetworkHandler().method_29356()) {
+            recipeHelper.registerCategory(new WorldGenCategory(world));
         }
         recipeHelper.registerCategory(new LootCategory());
         recipeHelper.registerCategory(new EntityLootCategory());
@@ -38,8 +40,8 @@ public class PluginEntry implements REIPluginV0 {
     @Override
     public void registerRecipeDisplays(RecipeHelper recipeHelper) {
         for (Block block : Registry.BLOCK) {
-            for (DimensionType type : Registry.DIMENSION_TYPE) {
-                recipeHelper.registerDisplay(new WorldGenDisplay(RERUtils.fromBlockToItemStackWithText(block), block, type));
+            for (RegistryKey<World> world : MinecraftClient.getInstance().getNetworkHandler().method_29356()) {
+                recipeHelper.registerDisplay(new WorldGenDisplay(RERUtils.fromBlockToItemStackWithText(block), block, world));
             }
 
             Identifier dropTableId = block.getLootTableId();
@@ -62,14 +64,14 @@ public class PluginEntry implements REIPluginV0 {
     public void registerOthers(RecipeHelper recipeHelper) {
         recipeHelper.removeAutoCraftButton(LootCategory.CATEGORY_ID);
         recipeHelper.removeAutoCraftButton(EntityLootCategory.CATEGORY_ID);
-        for (DimensionType type : Registry.DIMENSION_TYPE) {
-            recipeHelper.removeAutoCraftButton(WorldGenCategory.DIMENSION_TYPE_IDENTIFIER_MAP.get(type));
+        for (RegistryKey<World> world : MinecraftClient.getInstance().getNetworkHandler().method_29356()) {
+            recipeHelper.removeAutoCraftButton(WorldGenCategory.WORLD_IDENTIFIER_MAP.get(world));
         }
         recipeHelper.registerRecipeVisibilityHandler((category, display) -> {
             if (display instanceof WorldGenDisplay) {
                 WorldGenDisplay worldGenDisplay = (WorldGenDisplay) display;
                 WorldGenCategory worldGenCategory = (WorldGenCategory) category;
-                ClientWorldGenState state = ClientWorldGenState.byDimension(worldGenCategory.getDimension());
+                ClientWorldGenState state = ClientWorldGenState.byWorld(worldGenCategory.getWorld());
                 Map<Integer, Long> levelCount = state.levelCountsMap.get(worldGenDisplay.getOutputBlock());
                 if (levelCount == null)
                     return ActionResult.FAIL;

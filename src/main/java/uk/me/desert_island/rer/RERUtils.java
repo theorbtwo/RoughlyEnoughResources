@@ -16,7 +16,8 @@ import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
-import net.minecraft.world.dimension.DimensionType;
+import net.minecraft.util.registry.RegistryKey;
+import net.minecraft.world.World;
 import org.apache.logging.log4j.LogManager;
 import org.jetbrains.annotations.Nullable;
 import uk.me.desert_island.rer.mixin.FluidBlockHooks;
@@ -75,14 +76,14 @@ public class RERUtils {
         }
     }
 
-    public static ItemStack fromDimensionTypeToItemStack(DimensionType dt) {
-        if (dt == DimensionType.OVERWORLD) {
+    public static ItemStack fromWorldToItemStack(RegistryKey<World> dt) {
+        if (dt == World.OVERWORLD) {
             return new ItemStack(Items.GRASS_BLOCK);
         }
-        if (dt == DimensionType.THE_NETHER) {
+        if (dt == World.NETHER) {
             return new ItemStack(Items.NETHERRACK);
         }
-        if (dt == DimensionType.THE_END) {
+        if (dt == World.END) {
             return new ItemStack(Items.END_STONE);
         }
         return new ItemStack(Items.GLASS);

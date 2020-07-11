@@ -6,6 +6,8 @@ import me.shedaniel.rei.api.EntryStack;
 import me.shedaniel.rei.api.REIHelper;
 import me.shedaniel.rei.api.widgets.Tooltip;
 import me.shedaniel.rei.impl.RenderingEntry;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
@@ -89,7 +91,7 @@ public class RERUtils {
         return new ItemStack(Items.GLASS);
     }
 
-    @SuppressWarnings("UnstableApiUsage")
+    @Environment(EnvType.CLIENT)
     public static EntryStack fromBlockToItemStackWithText(Block block) {
         EntryStack stack = fromBlockToItemStack(block);
         if (stack.isEmpty()) {
@@ -112,6 +114,7 @@ public class RERUtils {
         return stack;
     }
 
+    @Environment(EnvType.CLIENT)
     public static EntryStack fromBlockToItemStack(Block block) {
         Item item = block.asItem();
 

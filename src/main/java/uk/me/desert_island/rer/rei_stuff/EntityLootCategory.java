@@ -16,6 +16,7 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.item.Items;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Quaternion;
+import uk.me.desert_island.rer.RERUtils;
 
 import java.util.List;
 
@@ -48,6 +49,11 @@ public class EntityLootCategory extends LootCategory {
         EntityLootDisplay entityLootDisplay = (EntityLootDisplay) display;
         Rectangle entityBounds = new Rectangle(bounds.getMinX(), bounds.getMinY(), 54, 54);
         Entity entity = entityLootDisplay.getInputEntity().create(MinecraftClient.getInstance().world);
+        if (entity == null) {
+            // 
+            RERUtils.LOGGER.warn("can't create a %s entity", entityLootDisplay.getInputEntity());
+            return;
+        }
         widgets.add(Widgets.createSlotBase(entityBounds));
         widgets.add(Widgets.createDrawableWidget((helper, matrices, mouseX, mouseY, delta) -> {
             ScissorsHandler.INSTANCE.scissor(new Rectangle(entityBounds.x + 1, entityBounds.y + 1, entityBounds.width - 2, entityBounds.height - 2));

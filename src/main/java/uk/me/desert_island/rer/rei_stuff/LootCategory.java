@@ -242,7 +242,6 @@ public class LootCategory implements RecipeCategory<LootDisplay> {
             ScissorsHandler.INSTANCE.removeLastScissor();
         }
 
-        @SuppressWarnings("deprecation")
         private void renderScrollBar() {
             int maxScroll = getMaxScroll();
             int scrollbarPositionMinX = getBounds().getMaxX() - 7;

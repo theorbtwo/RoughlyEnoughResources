@@ -392,6 +392,7 @@ public abstract class LootDisplay implements RecipeDisplay {
         return createNew ? newOutputs : null;
     }
 
+    @SuppressWarnings({"resource"}) // MinecraftClient.getInstance() is a singleton, and won't actually leak.
     private EntryStack smelt(EntryStack stack) {
         if (stack.isEmpty() || stack.getType() != EntryStack.Type.ITEM)
             return stack.copy();

@@ -43,6 +43,7 @@ public class EntityLootCategory extends LootCategory {
     }
 
     @Override
+    @SuppressWarnings({"resource"}) // MinecraftClient.getInstance() is a singleton, and won't actually leak.
     protected void registerWidget(LootDisplay display, List<Widget> widgets, Rectangle bounds) {
         EntityLootDisplay entityLootDisplay = (EntityLootDisplay) display;
         Rectangle entityBounds = new Rectangle(bounds.getMinX(), bounds.getMinY(), 54, 54);

@@ -27,7 +27,7 @@ public class MixinChunkGenerator {
 
         RERUtils.LOGGER.debug("generateFeatures for block %d,%d", centerBlockX, centerBlockZ);
 
-        WorldGenState state = WorldGenState.byWorld(region.getWorld());
+        WorldGenState state = WorldGenState.byWorld(region.toServerWorld().getRegistryKey());
 
         for (int y = 0; y < 128; y++) {
             for (int x = centerBlockX - 8; x < centerBlockX + 8; x++) {

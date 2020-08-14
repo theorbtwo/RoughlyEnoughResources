@@ -226,7 +226,7 @@ public abstract class LootDisplay implements RecipeDisplay {
                     outputs.addAll(munchLootSupplierJson(RoughlyEnoughResources.GSON.fromJson(json, JsonElement.class)));
                 break;
             case "minecraft:tag":
-                Tag<Item> tag = ItemTags.getContainer().get(new Identifier(object.get("name").getAsString()));
+                Tag<Item> tag = ItemTags.getContainer().getTag(new Identifier(object.get("name").getAsString()));
                 if (tag != null)
                     outputs.addAll(tag.values().stream().map(item -> {
                         EntryStack stack = EntryStack.create(item);

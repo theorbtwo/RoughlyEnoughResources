@@ -30,7 +30,7 @@ public class PluginEntry implements REIPluginV0 {
 
     @Override
     public void registerPluginCategories(RecipeHelper recipeHelper) {
-        for (RegistryKey<World> world : MinecraftClient.getInstance().getNetworkHandler().method_29356()) {
+        for (RegistryKey<World> world : MinecraftClient.getInstance().getNetworkHandler().getWorldKeys()) {
             recipeHelper.registerCategory(new WorldGenCategory(world));
         }
         recipeHelper.registerCategory(new LootCategory());
@@ -40,7 +40,7 @@ public class PluginEntry implements REIPluginV0 {
     @Override
     public void registerRecipeDisplays(RecipeHelper recipeHelper) {
         for (Block block : Registry.BLOCK) {
-            for (RegistryKey<World> world : MinecraftClient.getInstance().getNetworkHandler().method_29356()) {
+            for (RegistryKey<World> world : MinecraftClient.getInstance().getNetworkHandler().getWorldKeys()) {
                 recipeHelper.registerDisplay(new WorldGenDisplay(RERUtils.fromBlockToItemStackWithText(block), block, world));
             }
 
@@ -64,7 +64,7 @@ public class PluginEntry implements REIPluginV0 {
     public void registerOthers(RecipeHelper recipeHelper) {
         recipeHelper.removeAutoCraftButton(LootCategory.CATEGORY_ID);
         recipeHelper.removeAutoCraftButton(EntityLootCategory.CATEGORY_ID);
-        for (RegistryKey<World> world : MinecraftClient.getInstance().getNetworkHandler().method_29356()) {
+        for (RegistryKey<World> world : MinecraftClient.getInstance().getNetworkHandler().getWorldKeys()) {
             recipeHelper.removeAutoCraftButton(WorldGenCategory.WORLD_IDENTIFIER_MAP.get(world));
         }
         recipeHelper.registerRecipeVisibilityHandler((category, display) -> {

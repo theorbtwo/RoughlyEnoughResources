@@ -47,55 +47,57 @@ public class EntityLootCategory extends LootCategory {
         EntityLootDisplay entityLootDisplay = (EntityLootDisplay) display;
         Rectangle entityBounds = new Rectangle(bounds.getMinX(), bounds.getMinY(), 54, 54);
         Entity entity = entityLootDisplay.getInputEntity().create(MinecraftClient.getInstance().world);
-        widgets.add(Widgets.createSlotBase(entityBounds));
-        widgets.add(Widgets.createDrawableWidget((helper, matrices, mouseX, mouseY, delta) -> {
-            ScissorsHandler.INSTANCE.scissor(new Rectangle(entityBounds.x + 1, entityBounds.y + 1, entityBounds.width - 2, entityBounds.height - 2));
-            float f = (float) Math.atan((entityBounds.getCenterX() - mouseX) / 40.0F);
-            float g = (float) Math.atan((entityBounds.getCenterY() - mouseY) / 40.0F);
-            float size = 32;
-            if (Math.max(entity.getWidth(), entity.getHeight()) > 1.0) {
-                size /= Math.max(entity.getWidth(), entity.getHeight());
-            }
-            matrices.push();
-            matrices.translate(entityBounds.getCenterX(), entityBounds.getCenterY() + 20, 1050.0);
-            matrices.scale(1, 1, -1);
-            matrices.translate(0.0D, 0.0D, 1000.0D);
-            matrices.scale(size, size, size);
-            Quaternion quaternion = Vector3f.POSITIVE_Z.getDegreesQuaternion(180.0F);
-            Quaternion quaternion2 = Vector3f.POSITIVE_X.getDegreesQuaternion(g * 20.0F);
-            quaternion.hamiltonProduct(quaternion2);
-            matrices.multiply(quaternion);
-            float i = entity.yaw;
-            float j = entity.pitch;
-            float h = 0, k = 0, l = 0;
-            entity.yaw = 180.0F + f * 40.0F;
-            entity.pitch = -g * 20.0F;
-            if (entity instanceof LivingEntity) {
-                h = ((LivingEntity) entity).bodyYaw;
-                k = ((LivingEntity) entity).prevHeadYaw;
-                l = ((LivingEntity) entity).headYaw;
-                ((LivingEntity) entity).bodyYaw = 180.0F + f * 20.0F;
-                ((LivingEntity) entity).headYaw = entity.yaw;
-                ((LivingEntity) entity).prevHeadYaw = entity.yaw;
-            }
-            EntityRenderDispatcher entityRenderDispatcher = MinecraftClient.getInstance().getEntityRenderManager();
-            quaternion2.conjugate();
-            entityRenderDispatcher.setRotation(quaternion2);
-            entityRenderDispatcher.setRenderShadows(false);
-            VertexConsumerProvider.Immediate immediate = MinecraftClient.getInstance().getBufferBuilders().getEntityVertexConsumers();
-            entityRenderDispatcher.render(entity, 0.0D, 0.0D, 0.0D, 0.0F, 1.0F, matrices, immediate, 15728880);
-            immediate.draw();
-            entityRenderDispatcher.setRenderShadows(true);
-            entity.yaw = i;
-            entity.pitch = j;
-            if (entity instanceof LivingEntity) {
-                ((LivingEntity) entity).bodyYaw = h;
-                ((LivingEntity) entity).prevHeadYaw = k;
-                ((LivingEntity) entity).headYaw = l;
-            }
-            matrices.pop();
-            ScissorsHandler.INSTANCE.removeLastScissor();
-        }));
+        if (entity != null) {
+            widgets.add(Widgets.createSlotBase(entityBounds));
+            widgets.add(Widgets.createDrawableWidget((helper, matrices, mouseX, mouseY, delta) -> {
+                ScissorsHandler.INSTANCE.scissor(new Rectangle(entityBounds.x + 1, entityBounds.y + 1, entityBounds.width - 2, entityBounds.height - 2));
+                float f = (float) Math.atan((entityBounds.getCenterX() - mouseX) / 40.0F);
+                float g = (float) Math.atan((entityBounds.getCenterY() - mouseY) / 40.0F);
+                float size = 32;
+                if (Math.max(entity.getWidth(), entity.getHeight()) > 1.0) {
+                    size /= Math.max(entity.getWidth(), entity.getHeight());
+                }
+                matrices.push();
+                matrices.translate(entityBounds.getCenterX(), entityBounds.getCenterY() + 20, 1050.0);
+                matrices.scale(1, 1, -1);
+                matrices.translate(0.0D, 0.0D, 1000.0D);
+                matrices.scale(size, size, size);
+                Quaternion quaternion = Vector3f.POSITIVE_Z.getDegreesQuaternion(180.0F);
+                Quaternion quaternion2 = Vector3f.POSITIVE_X.getDegreesQuaternion(g * 20.0F);
+                quaternion.hamiltonProduct(quaternion2);
+                matrices.multiply(quaternion);
+                float i = entity.yaw;
+                float j = entity.pitch;
+                float h = 0, k = 0, l = 0;
+                entity.yaw = 180.0F + f * 40.0F;
+                entity.pitch = -g * 20.0F;
+                if (entity instanceof LivingEntity) {
+                    h = ((LivingEntity) entity).bodyYaw;
+                    k = ((LivingEntity) entity).prevHeadYaw;
+                    l = ((LivingEntity) entity).headYaw;
+                    ((LivingEntity) entity).bodyYaw = 180.0F + f * 20.0F;
+                    ((LivingEntity) entity).headYaw = entity.yaw;
+                    ((LivingEntity) entity).prevHeadYaw = entity.yaw;
+                }
+                EntityRenderDispatcher entityRenderDispatcher = MinecraftClient.getInstance().getEntityRenderManager();
+                quaternion2.conjugate();
+                entityRenderDispatcher.setRotation(quaternion2);
+                entityRenderDispatcher.setRenderShadows(false);
+                VertexConsumerProvider.Immediate immediate = MinecraftClient.getInstance().getBufferBuilders().getEntityVertexConsumers();
+                entityRenderDispatcher.render(entity, 0.0D, 0.0D, 0.0D, 0.0F, 1.0F, matrices, immediate, 15728880);
+                immediate.draw();
+                entityRenderDispatcher.setRenderShadows(true);
+                entity.yaw = i;
+                entity.pitch = j;
+                if (entity instanceof LivingEntity) {
+                    ((LivingEntity) entity).bodyYaw = h;
+                    ((LivingEntity) entity).prevHeadYaw = k;
+                    ((LivingEntity) entity).headYaw = l;
+                }
+                matrices.pop();
+                ScissorsHandler.INSTANCE.removeLastScissor();
+            }));
+        }
         widgets.add(Widgets.createSlot(new Point(bounds.getMinX() + 54 - 18, bounds.getMinY() + 1)).entry(entityLootDisplay.inputStack).disableBackground().disableHighlight());
     }
 }

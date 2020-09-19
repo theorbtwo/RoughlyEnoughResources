@@ -17,7 +17,7 @@ import uk.me.desert_island.rer.RERUtils;
 import uk.me.desert_island.rer.client.ClientLootCache;
 import uk.me.desert_island.rer.client.ClientWorldGenState;
 
-import java.util.Map;
+import java.util.concurrent.atomic.AtomicLongArray;
 
 @Environment(EnvType.CLIENT)
 public class PluginEntry implements REIPluginV0 {
@@ -72,11 +72,11 @@ public class PluginEntry implements REIPluginV0 {
                 WorldGenDisplay worldGenDisplay = (WorldGenDisplay) display;
                 WorldGenCategory worldGenCategory = (WorldGenCategory) category;
                 ClientWorldGenState state = ClientWorldGenState.byWorld(worldGenCategory.getWorld());
-                Map<Integer, Long> levelCount = state.levelCountsMap.get(worldGenDisplay.getOutputBlock());
+                AtomicLongArray levelCount = state.levelCountsMap.get(worldGenDisplay.getOutputBlock());
                 if (levelCount == null)
                     return ActionResult.FAIL;
-                for (Map.Entry<Integer, Long> entry : levelCount.entrySet()) {
-                    if (entry.getValue() > 0)
+                for (int i = 0; i < 128; i++) {
+                    if (levelCount.get(i) > 0)
                         return ActionResult.SUCCESS;
                 }
                 return ActionResult.FAIL;

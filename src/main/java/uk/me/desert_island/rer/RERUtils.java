@@ -69,12 +69,12 @@ public class RERUtils {
 
         public void debug(String str) {
             if (FabricLoader.getInstance().isDevelopmentEnvironment())
-                logger.info("[RER] " + str);
+                logger.debug("[RER] " + str);
         }
 
         public void debug(String str, Object... args) {
             if (FabricLoader.getInstance().isDevelopmentEnvironment())
-                logger.info("[RER] " + str, args);
+                logger.debug("[RER] " + str, args);
         }
     }
 

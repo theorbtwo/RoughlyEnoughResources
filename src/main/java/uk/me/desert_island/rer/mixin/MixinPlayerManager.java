@@ -1,7 +1,9 @@
 package uk.me.desert_island.rer.mixin;
 
+import io.netty.buffer.Unpooled;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.ClientConnection;
+import net.minecraft.network.PacketByteBuf;
 import net.minecraft.server.PlayerManager;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.registry.RegistryKey;
@@ -21,7 +23,7 @@ public class MixinPlayerManager {
     private void onPlayerConnect(ClientConnection connection, ServerPlayerEntity player, CallbackInfo ci) {
         for (RegistryKey<World> world : WorldGenState.persistentStateManagerMap.keySet()) {
             WorldGenState state = WorldGenState.byWorld(world);
-            state.sendToPlayer(player, state.toTag(new CompoundTag()), world);
+            state.sendToPlayers(Collections.singletonList(player), state.toNetwork(false, new PacketByteBuf(Unpooled.buffer()), state.buildEverythingLevels()), world);
         }
         RoughlyEnoughResources.sendLootToPlayers(((PlayerManager) (Object) this).getServer(), Collections.singletonList(player));
     }

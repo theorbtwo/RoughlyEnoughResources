@@ -28,7 +28,7 @@ public class RoughlyEnoughResourcesClient implements ClientModInitializer {
                 return;
             }
             ClientWorldGenState state = ClientWorldGenState.byWorld(world);
-            state.readFromServerTag(packetByteBuf.readCompoundTag());
+            state.readFromServerTag(packetByteBuf);
             RERUtils.LOGGER.debug("Received data for " + worldId);
         });
         if (FabricLoader.getInstance().isModLoaded("roughlyenoughitems")) {

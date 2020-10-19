@@ -1,0 +1,19 @@
+{
+  "rer.worldgen.category": "%s генерация",
+  "rer.loot.category": "Выпадает из блоков",
+  "rer.entity.loot.category": "Выпадает из сущностей",
+  "rer.condition.or": "%s или %s",
+  "rer.condition.invert": "не %s",
+  "rer.condition.enchantment": "требуется §5%s",
+  "rer.condition.item": "требуется %s",
+  "rer.condition.chance": "%s%%",
+  "rer.condition.chance.looting": "%s%% и многое другое с §5Добыча",
+  "rer.condition.killedByPlayer": "когда убит игроком",
+  "rer.condition.onFire": "Во время горения",
+  "rer.function.and": "%s + %s",
+  "rer.function.count": "Кол-во: %s",
+  "rer.function.atLeast": "как минимум %d",
+  "rer.function.atMost": "в большинстве %d",
+  "rer.function.bonus.enchant": "больше с %s",
+  "rer.loot.range": "от %d до %d"
+}

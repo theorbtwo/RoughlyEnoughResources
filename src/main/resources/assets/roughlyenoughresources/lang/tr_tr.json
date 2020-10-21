@@ -1,0 +1,19 @@
+{
+  "rer.worldgen.category": "%s Oluşumu",
+  "rer.loot.category": "Blok Yağma Eşyası",
+  "rer.entity.loot.category": "Varlık Yağma Eşyası",
+  "rer.condition.or": "%s veya %s",
+  "rer.condition.invert": "%s değil",
+  "rer.condition.enchantment": "%s ile",
+  "rer.condition.item": "%s ile",
+  "rer.condition.chance": "%%s%",
+  "rer.condition.chance.looting": "%%s% ve Ganimet ile beraber fazlası",
+  "rer.condition.killedByPlayer": "Oyuncu tarafından öldürüldüğünde düşer",
+  "rer.condition.onFire": "Yanarken düşer",
+  "rer.function.and": "%s + %s",
+  "rer.function.count": "Adet: %s",
+  "rer.function.atLeast": "en az %d",
+  "rer.function.atMost": "en çok %d",
+  "rer.function.bonus.enchant": "%s ile daha fazla",
+  "rer.loot.range": "%d adetten %d adede"
+}

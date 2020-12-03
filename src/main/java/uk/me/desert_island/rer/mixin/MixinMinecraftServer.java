@@ -46,9 +46,9 @@ public class MixinMinecraftServer {
                 if (!state.playerDirty.isEmpty()) {
                     state.lockPlayerDirty();
                     PacketByteBuf buf = state.toNetwork(true, new PacketByteBuf(Unpooled.buffer()), state.playerDirty);
-                    state.unlockPlayerDirty();
                     state.sendToPlayers(playerManager.getPlayerList(), buf, world);
                     state.playerDirty.clear();
+                    state.unlockPlayerDirty();
                 }
             }
         }

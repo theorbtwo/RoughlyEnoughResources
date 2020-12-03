@@ -1,5 +1,14 @@
 package uk.me.desert_island.rer;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLongArray;
+import java.util.concurrent.locks.ReentrantLock;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import io.netty.buffer.Unpooled;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
@@ -15,18 +24,21 @@ import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.PersistentState;
 import net.minecraft.world.PersistentStateManager;
 import net.minecraft.world.World;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLongArray;
 
 public class WorldGenState extends PersistentState {
     public static Map<RegistryKey<World>, PersistentStateManager> persistentStateManagerMap = new HashMap<>();
     private static final Logger LOGGER = LogManager.getFormatterLogger("rer-wgs");
     public IntSet playerDirty = new IntOpenHashSet();
+    private ReentrantLock lock = new ReentrantLock();
+
+    public void lockPlayerDirty()
+    {
+        lock.lock();
+    }
+    public void unlockPlayerDirty()
+    {
+        lock.unlock();
+    }
 
     public static void registerPsm(PersistentStateManager psm, RegistryKey<World> world) {
         if (persistentStateManagerMap.containsKey(world)) {
@@ -46,8 +58,10 @@ public class WorldGenState extends PersistentState {
     }
 
     public void markPlayerDirty(Block block) {
+        lockPlayerDirty();
         this.playerDirty.add(-1);
         this.playerDirty.add(Registry.BLOCK.getRawId(block));
+        unlockPlayerDirty();
     }
 
     public WorldGenState(String string_1, RegistryKey<World> type) {

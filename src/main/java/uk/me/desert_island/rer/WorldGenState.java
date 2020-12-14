@@ -1,14 +1,5 @@
 package uk.me.desert_island.rer;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLongArray;
-import java.util.concurrent.locks.ReentrantLock;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import io.netty.buffer.Unpooled;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
@@ -24,19 +15,26 @@ import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.PersistentState;
 import net.minecraft.world.PersistentStateManager;
 import net.minecraft.world.World;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLongArray;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class WorldGenState extends PersistentState {
     public static Map<RegistryKey<World>, PersistentStateManager> persistentStateManagerMap = new HashMap<>();
     private static final Logger LOGGER = LogManager.getFormatterLogger("rer-wgs");
     public IntSet playerDirty = new IntOpenHashSet();
-    private ReentrantLock lock = new ReentrantLock();
+    private final ReentrantLock lock = new ReentrantLock();
 
-    public void lockPlayerDirty()
-    {
+    public void lockPlayerDirty() {
         lock.lock();
     }
-    public void unlockPlayerDirty()
-    {
+
+    public void unlockPlayerDirty() {
         lock.unlock();
     }
 

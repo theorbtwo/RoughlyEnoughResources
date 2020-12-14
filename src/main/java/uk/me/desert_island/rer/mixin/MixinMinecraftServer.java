@@ -44,9 +44,11 @@ public class MixinMinecraftServer {
             for (RegistryKey<World> world : WorldGenState.persistentStateManagerMap.keySet()) {
                 WorldGenState state = WorldGenState.byWorld(world);
                 if (!state.playerDirty.isEmpty()) {
+                    state.lockPlayerDirty();
                     PacketByteBuf buf = state.toNetwork(true, new PacketByteBuf(Unpooled.buffer()), state.playerDirty);
                     state.sendToPlayers(playerManager.getPlayerList(), buf, world);
                     state.playerDirty.clear();
+                    state.unlockPlayerDirty();
                 }
             }
         }

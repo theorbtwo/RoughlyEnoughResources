@@ -1,6 +1,6 @@
 {
   "rer.worldgen.category": "%s 生成",
-  "rer.loot.category": " 方块战利品掉落",
+  "rer.loot.category": "方块战利品掉落",
   "rer.entity.loot.category": "实体战利品掉落",
   "rer.condition.or": "%s 或 %s",
   "rer.condition.invert": "非 %s",

@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicLongArray;
 
 @Environment(EnvType.CLIENT)
 public class ClientWorldGenState {
-    public static Map<RegistryKey<World>, ClientWorldGenState> dimensionTypeStateMap = new HashMap<>();
+    public static final Map<RegistryKey<World>, ClientWorldGenState> dimensionTypeStateMap = new ConcurrentHashMap<>();
 
     public Map<Block, AtomicLongArray> levelCountsMap = new ConcurrentHashMap<>();
     public AtomicLongArray totalCountsAtLevelsMap = new AtomicLongArray(128);
@@ -25,12 +25,7 @@ public class ClientWorldGenState {
     }
 
     public static ClientWorldGenState byWorld(RegistryKey<World> dim) {
-        ClientWorldGenState state = dimensionTypeStateMap.get(dim);
-        if (state == null) {
-            dimensionTypeStateMap.put(dim, new ClientWorldGenState());
-            return dimensionTypeStateMap.get(dim);
-        }
-        return state;
+        return dimensionTypeStateMap.computeIfAbsent(dim, k -> new ClientWorldGenState());
     }
 
     public void readFromServerTag(PacketByteBuf buf) {

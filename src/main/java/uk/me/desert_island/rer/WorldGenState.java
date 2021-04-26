@@ -15,6 +15,7 @@ import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.PersistentState;
 import net.minecraft.world.PersistentStateManager;
 import net.minecraft.world.World;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -40,7 +41,7 @@ public class WorldGenState extends PersistentState {
 
     public static void registerPsm(PersistentStateManager psm, RegistryKey<World> world) {
         if (persistentStateManagerMap.containsKey(world)) {
-            LOGGER.warn("Registering psm %s for already known world %s?", psm, world);
+            LOGGER.printf(Level.WARN, "Registering psm %s for already known world %s?", psm, world);
         }
         persistentStateManagerMap.put(world, psm);
     }

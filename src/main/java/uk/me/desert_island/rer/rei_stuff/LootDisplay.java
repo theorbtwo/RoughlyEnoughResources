@@ -15,7 +15,7 @@ import net.minecraft.client.resource.language.I18n;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.Enchantments;
-import net.minecraft.inventory.BasicInventory;
+import net.minecraft.inventory.SimpleInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.loot.context.LootContextType;
@@ -226,7 +226,7 @@ public abstract class LootDisplay implements RecipeDisplay {
                     outputs.addAll(munchLootSupplierJson(RoughlyEnoughResources.GSON.fromJson(json, JsonElement.class)));
                 break;
             case "minecraft:tag":
-                Tag<Item> tag = ItemTags.getContainer().getTag(new Identifier(object.get("name").getAsString()));
+                Tag<Item> tag = ItemTags.getTagGroup().getTag(new Identifier(object.get("name").getAsString()));
                 if (tag != null)
                     outputs.addAll(tag.values().stream().map(item -> {
                         EntryStack stack = EntryStack.create(item);
@@ -396,7 +396,7 @@ public abstract class LootDisplay implements RecipeDisplay {
         if (stack.isEmpty() || stack.getType() != EntryStack.Type.ITEM)
             return stack.copy();
         ClientWorld world = MinecraftClient.getInstance().world;
-        Optional<SmeltingRecipe> optional = world.getRecipeManager().getFirstMatch(RecipeType.SMELTING, new BasicInventory(stack.getItemStack()), world);
+        Optional<SmeltingRecipe> optional = world.getRecipeManager().getFirstMatch(RecipeType.SMELTING, new SimpleInventory(stack.getItemStack()), world);
         if (optional.isPresent()) {
             ItemStack itemStack = optional.get().getOutput();
             if (!itemStack.isEmpty()) {

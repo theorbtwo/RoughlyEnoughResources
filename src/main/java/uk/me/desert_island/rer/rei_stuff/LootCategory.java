@@ -122,7 +122,7 @@ public class LootCategory implements RecipeCategory<LootDisplay> {
             String string = String.valueOf(stack.getAmount());
             matrices.translate(0.0D, 0.0D, getZ() + 400.0F);
             VertexConsumerProvider.Immediate immediate = VertexConsumerProvider.immediate(Tessellator.getInstance().getBuffer());
-            font.draw(string, (float) (innerBounds.x + 19 - 2 - font.getStringWidth(string)), (float) (innerBounds.y + 6 + 3), 16777215, true, matrices.peek().getModel(), immediate, false, 0, 15728880);
+            font.draw(string, (float) (innerBounds.x + 19 - 2 - font.getWidth(string)), (float) (innerBounds.y + 6 + 3), 16777215, true, matrices.peek().getModel(), immediate, false, 0, 15728880);
             immediate.draw();
             matrices.pop();
         }

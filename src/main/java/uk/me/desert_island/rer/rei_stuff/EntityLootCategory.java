@@ -79,7 +79,7 @@ public class EntityLootCategory extends LootCategory {
                     ((LivingEntity) entity).headYaw = entity.yaw;
                     ((LivingEntity) entity).prevHeadYaw = entity.yaw;
                 }
-                EntityRenderDispatcher entityRenderDispatcher = MinecraftClient.getInstance().getEntityRenderManager();
+                EntityRenderDispatcher entityRenderDispatcher = MinecraftClient.getInstance().getEntityRenderDispatcher();
                 quaternion2.conjugate();
                 entityRenderDispatcher.setRotation(quaternion2);
                 entityRenderDispatcher.setRenderShadows(false);

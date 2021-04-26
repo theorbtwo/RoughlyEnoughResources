@@ -3,7 +3,7 @@ package uk.me.desert_island.rer;
 import io.netty.buffer.Unpooled;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
-import net.fabricmc.fabric.api.network.ServerSidePacketRegistry;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.fabric.api.util.NbtType;
 import net.minecraft.block.Block;
 import net.minecraft.nbt.CompoundTag;
@@ -70,7 +70,7 @@ public class WorldGenState extends PersistentState {
         PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer()).writeIdentifier(world.getValue());
         buf.writeBytes(infoBuf);
         for (ServerPlayerEntity entity : player) {
-            ServerSidePacketRegistry.INSTANCE.sendToPlayer(entity, RoughlyEnoughResources.SEND_WORLD_GEN_STATE, buf);
+            ServerPlayNetworking.send(entity, RoughlyEnoughResources.SEND_WORLD_GEN_STATE, buf);
         }
     }
 

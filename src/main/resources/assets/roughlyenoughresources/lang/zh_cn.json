@@ -1,0 +1,19 @@
+{
+  "rer.worldgen.category": "%s 生成",
+  "rer.loot.category": "方块战利品掉落",
+  "rer.entity.loot.category": "实体战利品掉落",
+  "rer.condition.or": "%s 或 %s",
+  "rer.condition.invert": "非 %s",
+  "rer.condition.enchantment": "和 %s",
+  "rer.condition.item": "和 %s",
+  "rer.condition.chance": "%s%%",
+  "rer.condition.chance.looting": "%s%% and more with looting",
+  "rer.condition.killedByPlayer": "当被玩家杀死时",
+  "rer.condition.onFire": "当着火时",
+  "rer.function.and": "%s + %s",
+  "rer.function.count": "数量: %s",
+  "rer.function.atLeast": "最少 %d",
+  "rer.function.atMost": "最多 %d",
+  "rer.function.bonus.enchant": "和 %s 更多",
+  "rer.loot.range": "%d 到 %d"
+}

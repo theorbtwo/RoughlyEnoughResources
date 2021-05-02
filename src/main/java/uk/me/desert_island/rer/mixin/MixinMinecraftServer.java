@@ -3,17 +3,17 @@ package uk.me.desert_island.rer.mixin;
 import com.mojang.authlib.GameProfileRepository;
 import com.mojang.authlib.minecraft.MinecraftSessionService;
 import com.mojang.datafixers.DataFixer;
+import io.netty.buffer.Unpooled;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.PacketByteBuf;
 import net.minecraft.resource.ResourcePackManager;
-import net.minecraft.resource.ResourcePackProfile;
 import net.minecraft.resource.ServerResourceManager;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.PlayerManager;
 import net.minecraft.server.WorldGenerationProgressListenerFactory;
-import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.UserCache;
+import net.minecraft.util.registry.DynamicRegistryManager;
 import net.minecraft.util.registry.RegistryKey;
-import net.minecraft.util.registry.RegistryTracker;
 import net.minecraft.world.SaveProperties;
 import net.minecraft.world.World;
 import net.minecraft.world.level.storage.LevelStorage;
@@ -34,21 +34,21 @@ public class MixinMinecraftServer {
     @Shadow private int ticks;
 
     @Inject(method = "<init>", at = @At("RETURN"))
-    private void init(Thread thread, RegistryTracker.Modifiable modifiable, LevelStorage.Session session, SaveProperties saveProperties, ResourcePackManager<ResourcePackProfile> resourcePackManager, Proxy proxy, DataFixer dataFixer, ServerResourceManager serverResourceManager, MinecraftSessionService minecraftSessionService, GameProfileRepository gameProfileRepository, UserCache userCache, WorldGenerationProgressListenerFactory worldGenerationProgressListenerFactory, CallbackInfo ci) {
+    private void init(Thread thread, DynamicRegistryManager.Impl impl, LevelStorage.Session session, SaveProperties saveProperties, ResourcePackManager resourcePackManager, Proxy proxy, DataFixer dataFixer, ServerResourceManager serverResourceManager, MinecraftSessionService minecraftSessionService, GameProfileRepository gameProfileRepository, UserCache userCache, WorldGenerationProgressListenerFactory worldGenerationProgressListenerFactory, CallbackInfo ci) {
         WorldGenState.persistentStateManagerMap.clear();
     }
 
     @Inject(method = "tickWorlds", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/world/ServerWorld;tick(Ljava/util/function/BooleanSupplier;)V"))
     private void tickWorlds(BooleanSupplier booleanSupplier, CallbackInfo ci) {
-        if (this.ticks % 100 == 0) {
+        if (this.ticks % 200 == 0) {
             for (RegistryKey<World> world : WorldGenState.persistentStateManagerMap.keySet()) {
                 WorldGenState state = WorldGenState.byWorld(world);
-                if (state.playerDirty) {
-                    CompoundTag tag = state.toTag(new CompoundTag());
-                    for (ServerPlayerEntity entity : playerManager.getPlayerList()) {
-                        state.sendToPlayer(entity, tag, world);
-                    }
-                    state.playerDirty = false;
+                if (!state.playerDirty.isEmpty()) {
+                    state.lockPlayerDirty();
+                    PacketByteBuf buf = state.toNetwork(true, new PacketByteBuf(Unpooled.buffer()), state.playerDirty);
+                    state.sendToPlayers(playerManager.getPlayerList(), buf, world);
+                    state.playerDirty.clear();
+                    state.unlockPlayerDirty();
                 }
             }
         }

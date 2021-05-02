@@ -69,12 +69,12 @@ public class RERUtils {
 
         public void debug(String str) {
             if (FabricLoader.getInstance().isDevelopmentEnvironment())
-                logger.info("[RER] " + str);
+                logger.debug("[RER] " + str);
         }
 
         public void debug(String str, Object... args) {
             if (FabricLoader.getInstance().isDevelopmentEnvironment())
-                logger.info("[RER] " + str, args);
+                logger.debug("[RER] " + str, args);
         }
     }
 
@@ -101,7 +101,7 @@ public class RERUtils {
                     MinecraftClient instance = MinecraftClient.getInstance();
                     TextRenderer font = instance.textRenderer;
                     String text = "?";
-                    int width = font.getStringWidth(text);
+                    int width = font.getWidth(text);
                     font.draw(matrices, text, rectangle.getCenterX() - width / 2f + 0.2f, rectangle.getCenterY() - font.fontHeight / 2f + 1f, REIHelper.getInstance().isDarkThemeEnabled() ? -4473925 : -12566464);
                 }
 

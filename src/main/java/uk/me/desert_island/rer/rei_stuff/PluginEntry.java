@@ -17,7 +17,7 @@ import uk.me.desert_island.rer.RERUtils;
 import uk.me.desert_island.rer.client.ClientLootCache;
 import uk.me.desert_island.rer.client.ClientWorldGenState;
 
-import java.util.Map;
+import java.util.concurrent.atomic.AtomicLongArray;
 
 @Environment(EnvType.CLIENT)
 public class PluginEntry implements REIPluginV0 {
@@ -30,7 +30,7 @@ public class PluginEntry implements REIPluginV0 {
 
     @Override
     public void registerPluginCategories(RecipeHelper recipeHelper) {
-        for (RegistryKey<World> world : MinecraftClient.getInstance().getNetworkHandler().method_29356()) {
+        for (RegistryKey<World> world : MinecraftClient.getInstance().getNetworkHandler().getWorldKeys()) {
             recipeHelper.registerCategory(new WorldGenCategory(world));
         }
         recipeHelper.registerCategory(new LootCategory());
@@ -40,7 +40,7 @@ public class PluginEntry implements REIPluginV0 {
     @Override
     public void registerRecipeDisplays(RecipeHelper recipeHelper) {
         for (Block block : Registry.BLOCK) {
-            for (RegistryKey<World> world : MinecraftClient.getInstance().getNetworkHandler().method_29356()) {
+            for (RegistryKey<World> world : MinecraftClient.getInstance().getNetworkHandler().getWorldKeys()) {
                 recipeHelper.registerDisplay(new WorldGenDisplay(RERUtils.fromBlockToItemStackWithText(block), block, world));
             }
 
@@ -64,7 +64,7 @@ public class PluginEntry implements REIPluginV0 {
     public void registerOthers(RecipeHelper recipeHelper) {
         recipeHelper.removeAutoCraftButton(LootCategory.CATEGORY_ID);
         recipeHelper.removeAutoCraftButton(EntityLootCategory.CATEGORY_ID);
-        for (RegistryKey<World> world : MinecraftClient.getInstance().getNetworkHandler().method_29356()) {
+        for (RegistryKey<World> world : MinecraftClient.getInstance().getNetworkHandler().getWorldKeys()) {
             recipeHelper.removeAutoCraftButton(WorldGenCategory.WORLD_IDENTIFIER_MAP.get(world));
         }
         recipeHelper.registerRecipeVisibilityHandler((category, display) -> {
@@ -72,11 +72,11 @@ public class PluginEntry implements REIPluginV0 {
                 WorldGenDisplay worldGenDisplay = (WorldGenDisplay) display;
                 WorldGenCategory worldGenCategory = (WorldGenCategory) category;
                 ClientWorldGenState state = ClientWorldGenState.byWorld(worldGenCategory.getWorld());
-                Map<Integer, Long> levelCount = state.levelCountsMap.get(worldGenDisplay.getOutputBlock());
+                AtomicLongArray levelCount = state.levelCountsMap.get(worldGenDisplay.getOutputBlock());
                 if (levelCount == null)
                     return ActionResult.FAIL;
-                for (Map.Entry<Integer, Long> entry : levelCount.entrySet()) {
-                    if (entry.getValue() > 0)
+                for (int i = 0; i < 128; i++) {
+                    if (levelCount.get(i) > 0)
                         return ActionResult.SUCCESS;
                 }
                 return ActionResult.FAIL;

@@ -4,12 +4,11 @@ import com.google.common.collect.Lists;
 import com.google.gson.*;
 import io.netty.buffer.Unpooled;
 import net.fabricmc.api.ModInitializer;
-import net.fabricmc.fabric.api.network.ServerSidePacketRegistry;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.loot.LootGsons;
 import net.minecraft.loot.LootManager;
 import net.minecraft.loot.LootTable;
-import net.minecraft.network.Packet;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -30,10 +29,9 @@ public class RoughlyEnoughResources implements ModInitializer {
     @Override
     public void onInitialize() {
         RERUtils.LOGGER.info("Hello Fabric world!");
-        ServerSidePacketRegistry.INSTANCE.register(ASK_SYNC_INFO, (packetContext, packetByteBuf) -> {
-            packetContext.getTaskQueue().submit(() -> {
-                ServerPlayerEntity player = (ServerPlayerEntity) packetContext.getPlayer();
-                sendLootToPlayers(player.getServer(), Collections.singletonList(player));
+        ServerPlayNetworking.registerGlobalReceiver(ASK_SYNC_INFO, (server, player, handler, buf, responseSender) -> {
+            server.execute(() -> {
+                sendLootToPlayers(server, Collections.singletonList(player));
             });
         });
     }
@@ -54,8 +52,7 @@ public class RoughlyEnoughResources implements ModInitializer {
                 buf.writeIdentifier(identifier).writeString(GSON.toJson(optimiseTable(GSON.toJsonTree(table))), 262144);
             }
             for (ServerPlayerEntity player : players) {
-                Packet<?> packet = ServerSidePacketRegistry.INSTANCE.toPacket(RoughlyEnoughResources.SEND_LOOT_INFO, new PacketByteBuf(buf.duplicate()));
-                player.networkHandler.sendPacket(packet);
+                ServerPlayNetworking.send(player, RoughlyEnoughResources.SEND_LOOT_INFO, new PacketByteBuf(buf.duplicate()));
             }
         }
     }

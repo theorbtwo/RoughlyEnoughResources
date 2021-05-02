@@ -1,7 +1,9 @@
 package uk.me.desert_island.rer;
 
 import io.netty.buffer.Unpooled;
-import net.fabricmc.fabric.api.network.ServerSidePacketRegistry;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.fabric.api.util.NbtType;
 import net.minecraft.block.Block;
 import net.minecraft.nbt.CompoundTag;
@@ -13,21 +15,33 @@ import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.PersistentState;
 import net.minecraft.world.PersistentStateManager;
 import net.minecraft.world.World;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLongArray;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class WorldGenState extends PersistentState {
     public static Map<RegistryKey<World>, PersistentStateManager> persistentStateManagerMap = new HashMap<>();
     private static final Logger LOGGER = LogManager.getFormatterLogger("rer-wgs");
-    public boolean playerDirty = false;
+    public IntSet playerDirty = new IntOpenHashSet();
+    private final ReentrantLock lock = new ReentrantLock();
+
+    public void lockPlayerDirty() {
+        lock.lock();
+    }
+
+    public void unlockPlayerDirty() {
+        lock.unlock();
+    }
 
     public static void registerPsm(PersistentStateManager psm, RegistryKey<World> world) {
         if (persistentStateManagerMap.containsKey(world)) {
-            LOGGER.warn("Registering psm %s for already known world %s?", psm, world);
+            LOGGER.printf(Level.WARN, "Registering psm %s for already known world %s?", psm, world);
         }
         persistentStateManagerMap.put(world, psm);
     }
@@ -42,20 +56,27 @@ public class WorldGenState extends PersistentState {
         return psm.getOrCreate(() -> new WorldGenState(name, world), name);
     }
 
-    public void markPlayerDirty() {
-        this.playerDirty = true;
+    public void markPlayerDirty(Block block) {
+        lockPlayerDirty();
+        this.playerDirty.add(-1);
+        this.playerDirty.add(Registry.BLOCK.getRawId(block));
+        unlockPlayerDirty();
     }
 
     public WorldGenState(String string_1, RegistryKey<World> type) {
         super(string_1);
     }
 
-    public void sendToPlayer(ServerPlayerEntity player, CompoundTag tag, RegistryKey<World> world) {
-        ServerSidePacketRegistry.INSTANCE.sendToPlayer(player, RoughlyEnoughResources.SEND_WORLD_GEN_STATE, new PacketByteBuf(Unpooled.buffer()).writeIdentifier(world.getValue()).writeCompoundTag(tag));
+    public void sendToPlayers(Iterable<ServerPlayerEntity> player, PacketByteBuf infoBuf, RegistryKey<World> world) {
+        PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer()).writeIdentifier(world.getValue());
+        buf.writeBytes(infoBuf);
+        for (ServerPlayerEntity entity : player) {
+            ServerPlayNetworking.send(entity, RoughlyEnoughResources.SEND_WORLD_GEN_STATE, buf);
+        }
     }
 
-    public Map<Block, Map<Integer, Long>> levelCountsMap = new ConcurrentHashMap<>();
-    public Map<Integer, Long> totalCountsAtLevelsMap = new ConcurrentHashMap<>(128);
+    public Map<Block, AtomicLongArray> levelCountsMap = new ConcurrentHashMap<>();
+    public AtomicLongArray totalCountsAtLevelsMap = new AtomicLongArray(128);
     public final int CURRENT_VERSION = 0;
 
     /*
@@ -80,21 +101,21 @@ public class WorldGenState extends PersistentState {
         }
 
         levelCountsMap.clear();
-        totalCountsAtLevelsMap.clear();
+        totalCountsAtLevelsMap = new AtomicLongArray(128);
 
         long[] totalCountsAtLevels = root.getLongArray("total_counts_at_level");
         for (int i = 0; i < totalCountsAtLevels.length; i++) {
-            totalCountsAtLevelsMap.put(i, totalCountsAtLevels[i]);
+            totalCountsAtLevelsMap.set(i, totalCountsAtLevels[i]);
         }
 
         CompoundTag levelCountsForBlock = root.getCompound("level_counts_for_block");
         for (String blockIdString : levelCountsForBlock.getKeys()) {
             Block block = Registry.BLOCK.get(new Identifier(blockIdString));
-            levelCountsMap.put(block, new ConcurrentHashMap<>(128));
-            Map<Integer, Long> levelCount = levelCountsMap.get(block);
+            levelCountsMap.put(block, new AtomicLongArray(128));
+            AtomicLongArray levelCount = levelCountsMap.get(block);
             long[] countsForBlockTag = levelCountsForBlock.getLongArray(blockIdString);
             for (int i = 0; i < 128; i++) {
-                levelCount.put(i, countsForBlockTag[i]);
+                levelCount.set(i, countsForBlockTag[i]);
             }
         }
     }
@@ -105,21 +126,58 @@ public class WorldGenState extends PersistentState {
 
         long[] totalCountsAtLevelArray = new long[128];
         for (int i = 0; i < 128; i++) {
-            totalCountsAtLevelArray[i] = totalCountsAtLevelsMap.getOrDefault(i, 0L);
+            totalCountsAtLevelArray[i] = totalCountsAtLevelsMap.get(i);
         }
         rootTag.putLongArray("total_counts_at_level", totalCountsAtLevelArray);
 
         CompoundTag tag = new CompoundTag();
         for (Block block : levelCountsMap.keySet()) {
-            Map<Integer, Long> countsForBlockMap = levelCountsMap.get(block);
+            AtomicLongArray countsForBlockMap = levelCountsMap.get(block);
             long[] countsForBlockTag = new long[128];
             for (int i = 0; i < 128; i++) {
-                countsForBlockTag[i] = countsForBlockMap.getOrDefault(i, (long) 0);
+                countsForBlockTag[i] = countsForBlockMap.get(i);
             }
             tag.putLongArray(Registry.BLOCK.getId(block).toString(), countsForBlockTag);
         }
         rootTag.put("level_counts_for_block", tag);
 
         return rootTag;
+    }
+
+    public PacketByteBuf toNetwork(boolean append, PacketByteBuf buf, IntSet allLevels) {
+        buf.writeBoolean(append);
+        if (allLevels.contains(-1)) {
+            long[] totalCountsAtLevelArray = new long[128];
+            for (int i = 0; i < 128; i++) {
+                totalCountsAtLevelArray[i] = totalCountsAtLevelsMap.get(i);
+            }
+            buf.writeLongArray(totalCountsAtLevelArray);
+            allLevels.remove(-1);
+        }
+        for (int level : allLevels) {
+            Block block = Registry.BLOCK.get(level);
+            AtomicLongArray countsForBlockMap = levelCountsMap.get(block);
+
+            if (countsForBlockMap != null) {
+                long[] countsForBlockTag = new long[128];
+                for (int i = 0; i < 128; i++) {
+                    countsForBlockTag[i] = countsForBlockMap.get(i);
+                }
+
+                buf.writeInt(level);
+                buf.writeLongArray(countsForBlockTag);
+            }
+        }
+
+        return buf;
+    }
+
+    public IntSet buildEverythingLevels() {
+        IntSet levels = new IntOpenHashSet();
+        levels.add(-1);
+        for (Block block : levelCountsMap.keySet()) {
+            levels.add(Registry.BLOCK.getRawId(block));
+        }
+        return levels;
     }
 }

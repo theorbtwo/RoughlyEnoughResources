@@ -12,8 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import uk.me.desert_island.rer.RERUtils;
 import uk.me.desert_island.rer.WorldGenState;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLongArray;
 
 @Mixin(ChunkGenerator.class)
 public class MixinChunkGenerator {
@@ -27,30 +26,30 @@ public class MixinChunkGenerator {
 
         RERUtils.LOGGER.debug("generateFeatures for block %d,%d", centerBlockX, centerBlockZ);
 
-        WorldGenState state = WorldGenState.byWorld(region.getWorld());
+        WorldGenState state = WorldGenState.byWorld(region.toServerWorld().getRegistryKey());
 
         for (int y = 0; y < 128; y++) {
             for (int x = centerBlockX - 8; x < centerBlockX + 8; x++) {
                 /* use heightmap or something instead of hardcoding this? */
                 for (int z = centerBlockZ - 8; z < centerBlockZ + 8; z++) {
                     Block block = region.getBlockState(new BlockPos(x, y, z)).getBlock();
-                    //LOGGER.info("at (%d, %d, %d), got %s", x, y, z, block);
 
-                    state.totalCountsAtLevelsMap.put(y, state.totalCountsAtLevelsMap.getOrDefault(y, 0L) + 1);
+                    state.totalCountsAtLevelsMap.set(y, state.totalCountsAtLevelsMap.get(y) + 1);
 
-                    Map<Integer, Long> levelCount = state.levelCountsMap.get(block);
+                    AtomicLongArray levelCount = state.levelCountsMap.get(block);
                     if (levelCount == null) {
-                        levelCount = new ConcurrentHashMap<>(128);
+                        levelCount = new AtomicLongArray(128);
                         state.levelCountsMap.put(block, levelCount);
                     }
 
-                    levelCount.put(y, levelCount.getOrDefault(y, 0L) + 1);
+                    levelCount.set(y, levelCount.get(y) + 1);
+                    
+                    state.markPlayerDirty(block);
                 }
             }
         }
 
         state.markDirty();
-        state.markPlayerDirty();
         long endTime = System.nanoTime();
         RERUtils.LOGGER.debug("RER profiling that chunk took %f ms", (endTime - startTime) / 1e9);
     }

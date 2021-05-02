@@ -49,6 +49,7 @@ public class EntityLootCategory extends LootCategory {
         EntityLootDisplay entityLootDisplay = (EntityLootDisplay) display;
         Rectangle entityBounds = new Rectangle(bounds.getMinX(), bounds.getMinY(), 54, 54);
         Entity entity = entityLootDisplay.getInputEntity().create(MinecraftClient.getInstance().world);
+
         if (entity == null) {
             // 
             RERUtils.LOGGER.warn("can't create a %s entity", entityLootDisplay.getInputEntity());
@@ -85,7 +86,7 @@ public class EntityLootCategory extends LootCategory {
                 ((LivingEntity) entity).headYaw = entity.yaw;
                 ((LivingEntity) entity).prevHeadYaw = entity.yaw;
             }
-            EntityRenderDispatcher entityRenderDispatcher = MinecraftClient.getInstance().getEntityRenderManager();
+            EntityRenderDispatcher entityRenderDispatcher = MinecraftClient.getInstance().getEntityRenderDispatcher();
             quaternion2.conjugate();
             entityRenderDispatcher.setRotation(quaternion2);
             entityRenderDispatcher.setRenderShadows(false);

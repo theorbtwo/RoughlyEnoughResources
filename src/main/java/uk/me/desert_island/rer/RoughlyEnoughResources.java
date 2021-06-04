@@ -22,13 +22,15 @@ import java.util.stream.Collectors;
 public class RoughlyEnoughResources implements ModInitializer {
     public static final Gson GSON = LootGsons.getTableGsonBuilder().create();
 
-    public static final Identifier SEND_WORLD_GEN_STATE = new Identifier("roughlyenoughresources", "swds");
+    public static final Identifier SEND_WORLD_GEN_STATE_START = new Identifier("roughlyenoughresources", "swds_start");
+    public static final Identifier SEND_WORLD_GEN_STATE_CHUNK = new Identifier("roughlyenoughresources", "swds_chunk");
+    public static final Identifier SEND_WORLD_GEN_STATE_DONE  = new Identifier("roughlyenoughresources", "swds_done");
     public static final Identifier SEND_LOOT_INFO = new Identifier("roughlyenoughresources", "sli");
     public static final Identifier ASK_SYNC_INFO = new Identifier("roughlyenoughresources", "asi");
 
     @Override
     public void onInitialize() {
-        RERUtils.LOGGER.info("Hello Fabric world!");
+        RERUtils.LOGGER.info("RoughlyEnoughPacketSize?  Possibly.");
         ServerPlayNetworking.registerGlobalReceiver(ASK_SYNC_INFO, (server, player, handler, buf, responseSender) -> {
             server.execute(() -> {
                 sendLootToPlayers(server, Collections.singletonList(player));

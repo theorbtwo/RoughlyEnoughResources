@@ -1,5 +1,7 @@
 package uk.me.desert_island.rer;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.CompositeByteBuf;
 import io.netty.buffer.Unpooled;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
@@ -70,8 +72,29 @@ public class WorldGenState extends PersistentState {
     public void sendToPlayers(Iterable<ServerPlayerEntity> player, PacketByteBuf infoBuf, RegistryKey<World> world) {
         PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer()).writeIdentifier(world.getValue());
         buf.writeBytes(infoBuf);
+
+        ByteBuf start_bb = Unpooled.buffer().writeInt(buf.readableBytes());
+        PacketByteBuf start_packet = new PacketByteBuf(start_bb);
+
+        PacketByteBuf done_packet = new PacketByteBuf(Unpooled.buffer());
+
+
         for (ServerPlayerEntity entity : player) {
-            ServerPlayNetworking.send(entity, RoughlyEnoughResources.SEND_WORLD_GEN_STATE, buf);
+            ServerPlayNetworking.send(entity, RoughlyEnoughResources.SEND_WORLD_GEN_STATE_START, start_packet);
+
+            PacketByteBuf player_packet = new PacketByteBuf(buf.retainedDuplicate());
+
+            while (player_packet.readableBytes() > 0) {
+                int this_size = player_packet.readableBytes();
+                if (this_size > 1000000) {
+                    this_size = 1000000;
+                }
+                ByteBuf sub_bb = Unpooled.buffer(this_size);
+                player_packet.readBytes(sub_bb, this_size);
+                
+                ServerPlayNetworking.send(entity, RoughlyEnoughResources.SEND_WORLD_GEN_STATE_CHUNK, new PacketByteBuf(sub_bb));
+            }
+            ServerPlayNetworking.send(entity, RoughlyEnoughResources.SEND_WORLD_GEN_STATE_DONE, done_packet);
         }
     }
 

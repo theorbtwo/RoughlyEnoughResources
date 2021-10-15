@@ -1,7 +1,6 @@
 package uk.me.desert_island.rer.mixin;
 
 import io.netty.buffer.Unpooled;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.ClientConnection;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.server.PlayerManager;

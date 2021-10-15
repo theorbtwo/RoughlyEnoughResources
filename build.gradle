@@ -1,6 +1,6 @@
 plugins {
-	id 'fabric-loom' version '0.7-SNAPSHOT'
-	id 'maven-publish'
+    id 'fabric-loom' version '0.10-SNAPSHOT'
+    id 'maven-publish'
 }
 
 sourceCompatibility = JavaVersion.VERSION_1_8
@@ -14,27 +14,32 @@ minecraft {
 }
 
 repositories {
-	maven { url "https://maven.shedaniel.me/" }
+    maven { url "https://maven.shedaniel.me/" }
 }
 
 
 dependencies {
-	//to change the versions see the gradle.properties file
-	minecraft "com.mojang:minecraft:${project.minecraft_version}"
-	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
-	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    //to change the versions see the gradle.properties file
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+    mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
+    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
-	// Fabric API. This is technically optional, but you probably want it anyway.
-	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+    // Fabric API. This is technically optional, but you probably want it anyway.
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
-	// PSA: Some older mods, compiled on Loom 0.2.1, might have outdated Maven POMs.
-	// You may need to force-disable transitiveness on them.
+    // PSA: Some older mods, compiled on Loom 0.2.1, might have outdated Maven POMs.
+    // You may need to force-disable transitiveness on them.
 
-	// TODO: this should actually be modCompileOnly "me.shedaniel:RoughlyEnoughItems-api:..." but RER depends on the internal EntryWidget
-	modCompileOnly "me.shedaniel:RoughlyEnoughItems:${project.rei_version}"
-	modRuntime "me.shedaniel:RoughlyEnoughItems:${project.rei_version}"
+    // TODO: this should actually be modCompileOnly "me.shedaniel:RoughlyEnoughItems-api:..." but RER depends on the internal EntryWidget
+    modCompileOnly "me.shedaniel:RoughlyEnoughItems-api-fabric:${project.rei_version}"
+    modImplementation "me.shedaniel:RoughlyEnoughItems-fabric:${project.rei_version}"
+    modImplementation "dev.architectury:architectury-fabric:2.5.32"
+    modImplementation "dev.architectury:architectury-fabric:2.5.32"
+    modImplementation("me.shedaniel.cloth:cloth-config-fabric:5.0.37") {
+        exclude "module": "fabric-api"
+    }
 
-	// Testing purposes: I think there's some sort of conflict?
+    // Testing purposes: I think there's some sort of conflict?
 //    modCompile "arcanemagic:ArcaneMagic:1.0.0:beta3"
 
 //    modCompile "crochet:Crochet:${project.crochet_version}"
@@ -44,50 +49,46 @@ dependencies {
 }
 
 processResources {
-	inputs.property "version", project.version
+    inputs.property "version", project.version
 
-	filesMatching("fabric.mod.json") {
-		expand "version": project.version
-	}
+    filesMatching("fabric.mod.json") {
+        expand "version": project.version
+    }
 }
 
 // ensure that the encoding is set to UTF-8, no matter what the system default is
 // this fixes some edge cases with special characters not displaying correctly
 // see http://yodaconditions.net/blog/fix-for-java-file-encoding-problems-with-gradle.html
 tasks.withType(JavaCompile) {
-	options.encoding = "UTF-8"
-
-	def targetVersion = 8
-	if (JavaVersion.current().isJava9Compatible()) {
-		it.options.release = targetVersion
-	}
+    options.encoding = "UTF-8"
+    it.options.release = 16
 }
 
 java {
-	withSourcesJar()
+    withSourcesJar()
 }
 
 jar {
-	from "LICENSE"
+    from "LICENSE"
 }
 
 // configure the maven publication
 publishing {
-	publications {
-		mavenJava(MavenPublication) {
-			// add all the jars that should be included when publishing to maven
-			artifact(jar) {
-				builtBy remapJar
-			}
-			artifact(sourcesJar) {
-				builtBy remapSourcesJar
-			}
-		}
-	}
+    publications {
+        mavenJava(MavenPublication) {
+            // add all the jars that should be included when publishing to maven
+            artifact(jar) {
+                builtBy remapJar
+            }
+            artifact(sourcesJar) {
+                builtBy remapSourcesJar
+            }
+        }
+    }
 
-	// select the repositories you want to publish to
-	repositories {
-		// uncomment to publish to the local maven
-		// mavenLocal()
-	}
+    // select the repositories you want to publish to
+    repositories {
+        // uncomment to publish to the local maven
+        // mavenLocal()
+    }
 }

@@ -51,7 +51,7 @@ public class RoughlyEnoughResourcesClient implements ClientModInitializer {
             RERUtils.LOGGER.debug("got SEND_WORLD_GEN_STATE_DONE");
             PacketByteBuf buf = new PacketByteBuf(world_state_buf);
             Identifier worldId = buf.readIdentifier();
-            RegistryKey<World> world = RegistryKey.of(Registry.DIMENSION, worldId);
+            RegistryKey<World> world = RegistryKey.of(Registry.WORLD_KEY, worldId);
             if (world == null) {
                 RERUtils.LOGGER.error("Found unregistered dimension type %s, do the server and client have the same dimensions?", worldId.toString());
                 return;

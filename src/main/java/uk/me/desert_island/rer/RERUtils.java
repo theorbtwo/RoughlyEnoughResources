@@ -2,10 +2,12 @@ package uk.me.desert_island.rer;
 
 import me.shedaniel.math.Point;
 import me.shedaniel.math.Rectangle;
-import me.shedaniel.rei.api.EntryStack;
-import me.shedaniel.rei.api.REIHelper;
-import me.shedaniel.rei.api.widgets.Tooltip;
-import me.shedaniel.rei.impl.RenderingEntry;
+import me.shedaniel.rei.api.client.REIRuntime;
+import me.shedaniel.rei.api.client.gui.AbstractRenderer;
+import me.shedaniel.rei.api.client.gui.widgets.Tooltip;
+import me.shedaniel.rei.api.client.util.ClientEntryStacks;
+import me.shedaniel.rei.api.common.entry.EntryStack;
+import me.shedaniel.rei.api.common.util.EntryStacks;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.loader.api.FabricLoader;
@@ -92,38 +94,38 @@ public class RERUtils {
     }
 
     @Environment(EnvType.CLIENT)
-    public static EntryStack fromBlockToItemStackWithText(Block block) {
-        EntryStack stack = fromBlockToItemStack(block);
+    public static EntryStack<?> fromBlockToItemStackWithText(Block block) {
+        EntryStack<?> stack = fromBlockToItemStack(block);
         if (stack.isEmpty()) {
-            return new RenderingEntry() {
+            return ClientEntryStacks.of(new AbstractRenderer() {
                 @Override
-                public void render(MatrixStack matrices, Rectangle rectangle, int mouseX, int mouseY, float delta) {
+                public void render(MatrixStack matrices, Rectangle rectangle, int i, int i1, float v) {
                     MinecraftClient instance = MinecraftClient.getInstance();
                     TextRenderer font = instance.textRenderer;
                     String text = "?";
                     int width = font.getWidth(text);
-                    font.draw(matrices, text, rectangle.getCenterX() - width / 2f + 0.2f, rectangle.getCenterY() - font.fontHeight / 2f + 1f, REIHelper.getInstance().isDarkThemeEnabled() ? -4473925 : -12566464);
+                    font.draw(matrices, text, rectangle.getCenterX() - width / 2f + 0.2f, rectangle.getCenterY() - font.fontHeight / 2f + 1f, REIRuntime.getInstance().isDarkThemeEnabled() ? -4473925 : -12566464);
                 }
 
                 @Override
                 public @Nullable Tooltip getTooltip(Point mouse) {
                     return Tooltip.create(mouse, block.getName());
                 }
-            };
+            });
         }
         return stack;
     }
 
     @Environment(EnvType.CLIENT)
-    public static EntryStack fromBlockToItemStack(Block block) {
+    public static EntryStack<?> fromBlockToItemStack(Block block) {
         Item item = block.asItem();
 
         if (block instanceof FluidBlock) {
-            return EntryStack.create(((FluidBlockHooks) block).getFluid());
+            return EntryStacks.of(((FluidBlockHooks) block).getFluid());
         }
 
         if (block == Blocks.FIRE) {
-            return EntryStack.create(Items.FLINT_AND_STEEL);
+            return EntryStacks.of(Items.FLINT_AND_STEEL);
         }
 
         ItemStack picked;
@@ -134,9 +136,9 @@ public class RERUtils {
         }
 
         if (picked != null && picked != ItemStack.EMPTY) {
-            return EntryStack.create(picked);
+            return EntryStacks.of(picked);
         }
 
-        return EntryStack.create(item);
+        return EntryStacks.of(item);
     }
 }

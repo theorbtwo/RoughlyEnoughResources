@@ -1,12 +1,15 @@
 package uk.me.desert_island.rer.rei_stuff;
 
-import com.google.common.collect.Lists;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import me.shedaniel.rei.api.EntryStack;
-import me.shedaniel.rei.api.RecipeDisplay;
+import me.shedaniel.rei.api.common.category.CategoryIdentifier;
+import me.shedaniel.rei.api.common.display.Display;
+import me.shedaniel.rei.api.common.entry.EntryIngredient;
+import me.shedaniel.rei.api.common.entry.EntryStack;
+import me.shedaniel.rei.api.common.entry.type.VanillaEntryTypes;
+import me.shedaniel.rei.api.common.util.EntryStacks;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.loader.api.FabricLoader;
@@ -19,7 +22,7 @@ import net.minecraft.inventory.SimpleInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.loot.context.LootContextType;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.StringNbtReader;
 import net.minecraft.recipe.RecipeType;
 import net.minecraft.recipe.SmeltingRecipe;
@@ -43,8 +46,8 @@ import java.util.stream.Collectors;
 
 @SuppressWarnings("StatementWithEmptyBody")
 @Environment(EnvType.CLIENT)
-public abstract class LootDisplay implements RecipeDisplay {
-    public EntryStack inputStack;
+public abstract class LootDisplay implements Display {
+    public EntryStack<?> inputStack;
     public Identifier lootTableId;
     public LootContextType contextType;
     public List<LootOutput> outputs = null;
@@ -52,22 +55,22 @@ public abstract class LootDisplay implements RecipeDisplay {
     public static final NumberFormat FORMAT_MORE = new DecimalFormat("#.####");
 
     @Override
-    public List<List<EntryStack>> getInputEntries() {
-        return Collections.singletonList(Collections.singletonList(this.inputStack));
+    public List<EntryIngredient> getInputEntries() {
+        return Collections.singletonList(EntryIngredient.of(this.inputStack));
     }
 
     public abstract Identifier getLocation();
 
     @Override
-    public List<EntryStack> getOutputEntries() {
-        List<EntryStack> stacks = Lists.newArrayList();
+    public List<EntryIngredient> getOutputEntries() {
+        EntryIngredient.Builder stacks = EntryIngredient.builder();
         for (LootOutput output : getOutputs()) {
             stacks.add(output.original);
         }
-        return stacks;
+        return Collections.singletonList(stacks.build());
     }
 
-    public List<EntryStack> getFlattenedOutputEntries() {
+    /*public List<EntryStack> getFlattenedOutputEntries() {
         List<EntryStack> stacks = Lists.newArrayList();
         for (List<EntryStack> entry : getFullOutputEntries()) {
             if (entry.isEmpty()) {
@@ -85,10 +88,10 @@ public abstract class LootDisplay implements RecipeDisplay {
             stacks.add(output.output);
         }
         return stacks;
-    }
+    }*/
 
     @Override
-    public Identifier getRecipeCategory() {
+    public CategoryIdentifier<?> getCategoryIdentifier() {
         return LootCategory.CATEGORY_ID;
     }
 
@@ -120,9 +123,9 @@ public abstract class LootDisplay implements RecipeDisplay {
 
     public List<LootOutput> munchLootEntryItemJson(JsonObject object) {
         Item item = Registry.ITEM.get(new Identifier(object.get("name").getAsString()));
-        EntryStack stack = EntryStack.create(item);
+        EntryStack<?> stack = EntryStacks.of(item);
         LootOutput output = new LootOutput();
-        output.output = Lists.newArrayList(stack);
+        output.output = EntryIngredient.of(stack);
         output.original = stack.copy();
         List<LootOutput> outputs = new ArrayList<>();
         outputs.add(output);
@@ -229,9 +232,9 @@ public abstract class LootDisplay implements RecipeDisplay {
                 Tag<Item> tag = ItemTags.getTagGroup().getTag(new Identifier(object.get("name").getAsString()));
                 if (tag != null)
                     outputs.addAll(tag.values().stream().map(item -> {
-                        EntryStack stack = EntryStack.create(item);
+                        EntryStack<?> stack = EntryStacks.of(item);
                         LootOutput output = new LootOutput();
-                        output.output = Lists.newArrayList(stack);
+                        output.output = EntryIngredient.of(stack);
                         output.original = stack.copy();
                         return output;
                     }).collect(Collectors.toList()));
@@ -275,8 +278,8 @@ public abstract class LootDisplay implements RecipeDisplay {
         if (kind.equals("minecraft:set_count") && functionObject.has("count") && functionObject.get("count").isJsonPrimitive()) {
             int count = functionObject.get("count").getAsInt();
             for (LootOutput output : outputs) {
-                for (EntryStack stack : output.output) {
-                    stack.setAmount(count);
+                for (EntryStack<?> stack : output.output) {
+                    stack.<ItemStack>castValue().setCount(count);
                 }
                 output.setCountText(String.valueOf(count));
             }
@@ -288,13 +291,15 @@ public abstract class LootDisplay implements RecipeDisplay {
                 int max = MathHelper.floor(functionObject.get("count").getAsJsonObject().get("max").getAsFloat());
                 int no = max - min + 1;
                 for (LootOutput output : outputs) {
-                    EntryStack first = output.output.get(0);
-                    while (output.output.size() < no) {
-                        output.output.add(first.copy());
+                    ArrayList<EntryStack<?>> newList = new ArrayList<>(output.output);
+                    EntryStack<?> first = output.output.get(0);
+                    while (newList.size() < no) {
+                        newList.add(first.copy());
                     }
                     for (int i = 0; i < no; i++) {
-                        output.output.get(i).setAmount(min + i);
+                        newList.get(i).<ItemStack>castValue().setCount(min + i);
                     }
+                    output.output = EntryIngredient.of(newList);
                     output.setCountText(I18n.translate("rer.loot.range", min, max));
                 }
                 createNew = true;
@@ -303,19 +308,20 @@ public abstract class LootDisplay implements RecipeDisplay {
             Integer min = functionObject.get("limit").getAsJsonObject().has("min") ? functionObject.get("limit").getAsJsonObject().get("min").getAsInt() : null;
             Integer max = functionObject.get("limit").getAsJsonObject().has("max") ? functionObject.get("limit").getAsJsonObject().get("max").getAsInt() : null;
             for (LootOutput output : outputs) {
-                for (EntryStack stack : output.output) {
+                for (EntryStack<?> stack : output.output) {
+                    ItemStack value = stack.<ItemStack>castValue();
                     if (min != null) {
-                        int amount = stack.isEmpty() ? 0 : stack.getAmount();
+                        int amount = stack.isEmpty() ? 0 : value.getCount();
                         if (amount < min) {
-                            stack.setAmount(min);
+                            value.setCount(min);
                         }
                     }
-                    if (max != null && stack.getAmount() > max) {
-                        stack.setAmount(max);
+                    if (max != null && value.getCount() > max) {
+                        value.setCount(max);
                     }
                 }
                 if (output.output.isEmpty()) {
-                    output.output.add(EntryStack.empty());
+                    output.output = EntryIngredient.of(EntryStack.empty());
                 }
                 if (min != null)
                     output.addExtraTextCount(I18n.translate("rer.function.atLeast", min));
@@ -328,18 +334,20 @@ public abstract class LootDisplay implements RecipeDisplay {
             // Ignored
         } else if (kind.equals("minecraft:set_nbt") && functionObject.has("tag")) {
             try {
-                CompoundTag tag = StringNbtReader.parse(JsonHelper.getString(functionObject, "tag"));
+                NbtCompound tag = StringNbtReader.parse(JsonHelper.getString(functionObject, "tag"));
                 for (LootOutput output : outputs) {
-                    for (int i = 0; i < output.output.size(); i++) {
-                        EntryStack stack = output.output.get(i).copy();
-                        if (!stack.isEmpty() && stack.getType() == EntryStack.Type.ITEM) {
-                            stack.getItemStack().getOrCreateTag().copyFrom(tag);
+                    ArrayList<EntryStack<?>> newList = new ArrayList<>(output.output);
+                    for (int i = 0; i < newList.size(); i++) {
+                        EntryStack<?> stack = newList.get(i).copy();
+                        if (!stack.isEmpty() && stack.getType() == VanillaEntryTypes.ITEM) {
+                            stack.<ItemStack>castValue().getOrCreateNbt().copyFrom(tag);
                         }
-                        output.output.set(i, stack);
+                        newList.set(i, stack);
                     }
-                    EntryStack stack = output.original.copy();
-                    if (!stack.isEmpty() && stack.getType() == EntryStack.Type.ITEM) {
-                        stack.getItemStack().getOrCreateTag().copyFrom(tag);
+                    output.output = EntryIngredient.of(newList);
+                    EntryStack<?> stack = output.original.copy();
+                    if (!stack.isEmpty() && stack.getType() == VanillaEntryTypes.ITEM) {
+                        stack.<ItemStack>castValue().getOrCreateNbt().copyFrom(tag);
                     }
                     output.original = stack;
                 }
@@ -363,10 +371,12 @@ public abstract class LootDisplay implements RecipeDisplay {
             createNew = true;
         } else if (kind.equals("minecraft:furnace_smelt")) {
             for (LootOutput output : outputs) {
+                ArrayList<EntryStack<?>> newList = new ArrayList<>(output.output);
                 output.original = smelt(output.original);
-                for (int i = 0; i < output.output.size(); i++) {
-                    output.output.set(i, smelt(output.output.get(i)));
+                for (int i = 0; i < newList.size(); i++) {
+                    newList.set(i, smelt(newList.get(i)));
                 }
+                output.output = EntryIngredient.of(newList);
             }
             createNew = true;
         } else {
@@ -393,16 +403,16 @@ public abstract class LootDisplay implements RecipeDisplay {
     }
 
     @SuppressWarnings({"resource"}) // MinecraftClient.getInstance() is a singleton, and won't actually leak.
-    private EntryStack smelt(EntryStack stack) {
-        if (stack.isEmpty() || stack.getType() != EntryStack.Type.ITEM)
+    private EntryStack<?> smelt(EntryStack<?> stack) {
+        if (stack.isEmpty() || stack.getType() != VanillaEntryTypes.ITEM)
             return stack.copy();
         ClientWorld world = MinecraftClient.getInstance().world;
-        Optional<SmeltingRecipe> optional = world.getRecipeManager().getFirstMatch(RecipeType.SMELTING, new SimpleInventory(stack.getItemStack()), world);
+        Optional<SmeltingRecipe> optional = world.getRecipeManager().getFirstMatch(RecipeType.SMELTING, new SimpleInventory(stack.<ItemStack>castValue()), world);
         if (optional.isPresent()) {
             ItemStack itemStack = optional.get().getOutput();
             if (!itemStack.isEmpty()) {
-                EntryStack entryStack = EntryStack.create(itemStack.copy());
-                entryStack.setAmount(stack.getAmount());
+                EntryStack<?> entryStack = EntryStacks.of(itemStack.copy());
+                entryStack.<ItemStack>castValue().setCount(stack.<ItemStack>castValue().getCount());
                 return entryStack;
             }
         }

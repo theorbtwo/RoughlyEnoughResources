@@ -19,10 +19,8 @@ public class MixinChunkGenerator {
     @Inject(at = @At("RETURN"), method = "generateFeatures")
     private void generateFeatures(ChunkRegion region, StructureAccessor structureAccessor, CallbackInfo ci) {
         long startTime = System.nanoTime();
-        int centerChunkX = region.getCenterChunkX();
-        int centerChunkZ = region.getCenterChunkZ();
-        int centerBlockX = centerChunkX * 16;
-        int centerBlockZ = centerChunkZ * 16;
+        int centerBlockX = region.getCenterPos().getCenterX();    
+        int centerBlockZ = region.getCenterPos().getCenterZ();    
 
         RERUtils.LOGGER.debug("generateFeatures for block %d,%d", centerBlockX, centerBlockZ);
 

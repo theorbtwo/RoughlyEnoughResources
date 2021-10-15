@@ -1,14 +1,13 @@
 package uk.me.desert_island.rer;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.CompositeByteBuf;
 import io.netty.buffer.Unpooled;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.fabric.api.util.NbtType;
 import net.minecraft.block.Block;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.Identifier;
@@ -55,7 +54,7 @@ public class WorldGenState extends PersistentState {
     public static WorldGenState byWorld(RegistryKey<World> world) {
         String name = "rer_worldgen";
         PersistentStateManager psm = persistentStateManagerMap.get(world);
-        return psm.getOrCreate(() -> new WorldGenState(name, world), name);
+        return psm.getOrCreate(nbt -> new WorldGenState(nbt, name, world), () -> new WorldGenState(null, name, world), name);
     }
 
     public void markPlayerDirty(Block block) {
@@ -65,8 +64,10 @@ public class WorldGenState extends PersistentState {
         unlockPlayerDirty();
     }
 
-    public WorldGenState(String string_1, RegistryKey<World> type) {
-        super(string_1);
+    public WorldGenState(NbtCompound nbt, String string_1, RegistryKey<World> type) {
+        if (nbt != null) {
+            fromNbt(nbt);
+        }
     }
 
     public void sendToPlayers(Iterable<ServerPlayerEntity> player, PacketByteBuf infoBuf, RegistryKey<World> world) {
@@ -91,7 +92,7 @@ public class WorldGenState extends PersistentState {
                 }
                 ByteBuf sub_bb = Unpooled.buffer(this_size);
                 player_packet.readBytes(sub_bb, this_size);
-                
+
                 ServerPlayNetworking.send(entity, RoughlyEnoughResources.SEND_WORLD_GEN_STATE_CHUNK, new PacketByteBuf(sub_bb));
             }
             ServerPlayNetworking.send(entity, RoughlyEnoughResources.SEND_WORLD_GEN_STATE_DONE, done_packet);
@@ -107,9 +108,7 @@ public class WorldGenState extends PersistentState {
      * Version: 0
      *
      */
-
-    @Override
-    public void fromTag(CompoundTag root) {
+    public void fromNbt(NbtCompound root) {
         int version;
         if (!root.contains("Version", NbtType.INT)) {
             RERUtils.LOGGER.error("Invalid save data. Expected a Version, found no Version, throwing out existing data in a huff.");
@@ -131,7 +130,7 @@ public class WorldGenState extends PersistentState {
             totalCountsAtLevelsMap.set(i, totalCountsAtLevels[i]);
         }
 
-        CompoundTag levelCountsForBlock = root.getCompound("level_counts_for_block");
+        NbtCompound levelCountsForBlock = root.getCompound("level_counts_for_block");
         for (String blockIdString : levelCountsForBlock.getKeys()) {
             Block block = Registry.BLOCK.get(new Identifier(blockIdString));
             levelCountsMap.put(block, new AtomicLongArray(128));
@@ -144,7 +143,7 @@ public class WorldGenState extends PersistentState {
     }
 
     @Override
-    public CompoundTag toTag(CompoundTag rootTag) {
+    public NbtCompound writeNbt(NbtCompound rootTag) {
         rootTag.putInt("Version", 0);
 
         long[] totalCountsAtLevelArray = new long[128];
@@ -153,7 +152,7 @@ public class WorldGenState extends PersistentState {
         }
         rootTag.putLongArray("total_counts_at_level", totalCountsAtLevelArray);
 
-        CompoundTag tag = new CompoundTag();
+        NbtCompound tag = new NbtCompound();
         for (Block block : levelCountsMap.keySet()) {
             AtomicLongArray countsForBlockMap = levelCountsMap.get(block);
             long[] countsForBlockTag = new long[128];

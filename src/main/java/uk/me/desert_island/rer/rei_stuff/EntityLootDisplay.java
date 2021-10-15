@@ -1,6 +1,7 @@
 package uk.me.desert_island.rer.rei_stuff;
 
-import me.shedaniel.rei.api.EntryStack;
+import me.shedaniel.rei.api.common.category.CategoryIdentifier;
+import me.shedaniel.rei.api.common.util.EntryStacks;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.entity.EntityType;
@@ -16,7 +17,7 @@ public class EntityLootDisplay extends LootDisplay {
 
     public EntityLootDisplay(EntityType<?> inputEntity) {
         this.inputEntity = inputEntity;
-        this.inputStack = EntryStack.create(SpawnEggItem.forEntity(inputEntity));
+        this.inputStack = EntryStacks.of(SpawnEggItem.forEntity(inputEntity));
         this.lootTableId = inputEntity.getLootTableId();
         this.contextType = LootContextTypes.ENTITY;
     }
@@ -31,7 +32,7 @@ public class EntityLootDisplay extends LootDisplay {
     }
 
     @Override
-    public Identifier getRecipeCategory() {
+    public CategoryIdentifier<?> getCategoryIdentifier() {
         return EntityLootCategory.CATEGORY_ID;
     }
 

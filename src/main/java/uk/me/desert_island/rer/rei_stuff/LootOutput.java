@@ -1,6 +1,7 @@
 package uk.me.desert_island.rer.rei_stuff;
 
-import me.shedaniel.rei.api.EntryStack;
+import me.shedaniel.rei.api.common.entry.EntryIngredient;
+import me.shedaniel.rei.api.common.entry.EntryStack;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.resource.language.I18n;
@@ -15,8 +16,8 @@ public class LootOutput {
     public String extraTextCount;
     public String extraText;
     public List<ItemStack> extraInputs;
-    public List<EntryStack> output;
-    public EntryStack original;
+    public EntryIngredient output;
+    public EntryStack<?> original;
     public boolean nowInverted = false;
     public boolean lastInverted = false;
 
@@ -32,10 +33,11 @@ public class LootOutput {
         for (ItemStack extraInput : this.extraInputs) {
             out.extraInputs.add(extraInput.copy());
         }
-        out.output = new ArrayList<>();
-        for (EntryStack output : this.output) {
-            out.output.add(output.copy());
+        EntryIngredient.Builder builder = EntryIngredient.builder();
+        for (EntryStack<?> output : this.output) {
+            builder.add(output.copy());
         }
+        out.output = builder.build();
         out.original = this.original;
 
         return out;

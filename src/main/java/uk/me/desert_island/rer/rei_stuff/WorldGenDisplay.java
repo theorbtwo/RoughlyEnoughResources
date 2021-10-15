@@ -1,7 +1,9 @@
 package uk.me.desert_island.rer.rei_stuff;
 
-import me.shedaniel.rei.api.EntryStack;
-import me.shedaniel.rei.api.RecipeDisplay;
+import me.shedaniel.rei.api.common.category.CategoryIdentifier;
+import me.shedaniel.rei.api.common.display.Display;
+import me.shedaniel.rei.api.common.entry.EntryIngredient;
+import me.shedaniel.rei.api.common.entry.EntryStack;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.block.Block;
@@ -13,13 +15,13 @@ import java.util.Collections;
 import java.util.List;
 
 @Environment(EnvType.CLIENT)
-public class WorldGenDisplay implements RecipeDisplay {
-    private final EntryStack outputStack;
+public class WorldGenDisplay implements Display {
+    private final List<EntryIngredient> output;
     private final Block outputBlock;
     private final RegistryKey<World> world;
 
-    public WorldGenDisplay(EntryStack outputStack, Block outputBlock, RegistryKey<World> world) {
-        this.outputStack = outputStack;
+    public WorldGenDisplay(EntryStack<?> outputStack, Block outputBlock, RegistryKey<World> world) {
+        this.output = Collections.singletonList(EntryIngredient.of(outputStack));
         this.outputBlock = outputBlock;
         this.world = world;
     }
@@ -33,19 +35,17 @@ public class WorldGenDisplay implements RecipeDisplay {
     }
 
     @Override
-    public List<List<EntryStack>> getInputEntries() {
+    public List<EntryIngredient> getInputEntries() {
         return Collections.emptyList();
     }
 
     @Override
-    public List<EntryStack> getOutputEntries() {
-        return Collections.singletonList(outputStack);
+    public List<EntryIngredient> getOutputEntries() {
+        return output;
     }
 
     @Override
-    public Identifier getRecipeCategory() {
+    public CategoryIdentifier<?> getCategoryIdentifier() {
         return WorldGenCategory.WORLD_IDENTIFIER_MAP.get(world);
     }
-
-
 }

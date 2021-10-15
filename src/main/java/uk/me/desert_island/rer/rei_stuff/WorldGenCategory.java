@@ -3,22 +3,25 @@ package uk.me.desert_island.rer.rei_stuff;
 import com.google.common.collect.Maps;
 import me.shedaniel.math.Point;
 import me.shedaniel.math.Rectangle;
-import me.shedaniel.rei.api.EntryStack;
-import me.shedaniel.rei.api.REIHelper;
-import me.shedaniel.rei.api.RecipeCategory;
-import me.shedaniel.rei.api.widgets.Panel;
-import me.shedaniel.rei.api.widgets.Tooltip;
-import me.shedaniel.rei.api.widgets.Widgets;
-import me.shedaniel.rei.gui.entries.RecipeEntry;
-import me.shedaniel.rei.gui.widget.Widget;
+import me.shedaniel.rei.api.client.REIRuntime;
+import me.shedaniel.rei.api.client.gui.DisplayRenderer;
+import me.shedaniel.rei.api.client.gui.Renderer;
+import me.shedaniel.rei.api.client.gui.widgets.Tooltip;
+import me.shedaniel.rei.api.client.gui.widgets.Widget;
+import me.shedaniel.rei.api.client.gui.widgets.Widgets;
+import me.shedaniel.rei.api.client.registry.display.DisplayCategory;
+import me.shedaniel.rei.api.common.category.CategoryIdentifier;
+import me.shedaniel.rei.api.common.entry.EntryIngredient;
+import me.shedaniel.rei.api.common.entry.EntryStack;
+import me.shedaniel.rei.api.common.util.EntryStacks;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.block.Block;
 import net.minecraft.client.gui.DrawableHelper;
-import net.minecraft.client.resource.language.I18n;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.text.LiteralText;
-import net.minecraft.util.Identifier;
+import net.minecraft.text.Text;
+import net.minecraft.text.TranslatableText;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.util.registry.RegistryKey;
@@ -34,17 +37,17 @@ import java.util.StringJoiner;
 import java.util.function.Function;
 
 @Environment(EnvType.CLIENT)
-public class WorldGenCategory implements RecipeCategory<WorldGenDisplay> {
+public class WorldGenCategory implements DisplayCategory<WorldGenDisplay> {
     @Override
-    public Identifier getIdentifier() {
-        return WORLD_IDENTIFIER_MAP.get(world);
+    public CategoryIdentifier<? extends WorldGenDisplay> getCategoryIdentifier() {
+        return (CategoryIdentifier<? extends WorldGenDisplay>) WORLD_IDENTIFIER_MAP.get(world);
     }
 
-    static final Map<RegistryKey<World>, Identifier> WORLD_IDENTIFIER_MAP = Maps.newHashMap();
+    static final Map<RegistryKey<World>, CategoryIdentifier<?>> WORLD_IDENTIFIER_MAP = Maps.newHashMap();
     private final RegistryKey<World> world;
 
     public WorldGenCategory(RegistryKey<World> world) {
-        WORLD_IDENTIFIER_MAP.put(world, new Identifier("roughlyenoughresources", world.getValue().getPath() + "_worldgen_category"));
+        WORLD_IDENTIFIER_MAP.put(world, CategoryIdentifier.of("roughlyenoughresources", world.getValue().getPath() + "_worldgen_category"));
         this.world = world;
     }
 
@@ -53,16 +56,15 @@ public class WorldGenCategory implements RecipeCategory<WorldGenDisplay> {
     }
 
     @Override
-    public EntryStack getLogo() {
-        return EntryStack.create(RERUtils.fromWorldToItemStack(world));
+    public Renderer getIcon() {
+        return EntryStacks.of(RERUtils.fromWorldToItemStack(world));
     }
 
-    @Override
-    public RecipeEntry getSimpleRenderer(WorldGenDisplay recipe) {
-        List<EntryStack> stacks = recipe.getOutputEntries();
+    public DisplayRenderer getSimpleRenderer(WorldGenDisplay recipe) {
+        EntryIngredient stacks = recipe.getOutputEntries().get(0);
         Tooltip[] tooltip = {null};
-        return new RecipeEntry() {
-            private EntryStack getCurrent() {
+        return new DisplayRenderer() {
+            private EntryStack<?> getCurrent() {
                 if (stacks.isEmpty()) {
                     return EntryStack.empty();
                 } else {
@@ -82,7 +84,7 @@ public class WorldGenCategory implements RecipeCategory<WorldGenDisplay> {
 
             @Override
             public void render(MatrixStack matrices, Rectangle rectangle, int mouseX, int mouseY, float delta) {
-                EntryStack current = getCurrent();
+                EntryStack<?> current = getCurrent();
                 Rectangle innerBounds = new Rectangle(rectangle.x + rectangle.width / 2 - 8, rectangle.y + 3, 16, 16);
                 current.render(matrices, innerBounds, mouseX, mouseY, delta);
                 tooltip[0] = innerBounds.contains(mouseX, mouseY) ? current.getTooltip(new Point(mouseX, mouseY)) : null;
@@ -91,8 +93,8 @@ public class WorldGenCategory implements RecipeCategory<WorldGenDisplay> {
     }
 
     @Override
-    public String getCategoryName() {
-        return I18n.translate("rer.worldgen.category", mapAndJoinToString(world.getValue().getPath().split("_"), StringUtils::capitalize, " "));
+    public Text getTitle() {
+        return new TranslatableText("rer.worldgen.category", mapAndJoinToString(world.getValue().getPath().split("_"), StringUtils::capitalize, " "));
     }
 
     public static <T> String mapAndJoinToString(T[] list, Function<T, String> function, String separator) {
@@ -159,13 +161,10 @@ public class WorldGenCategory implements RecipeCategory<WorldGenDisplay> {
                         /*endx  */ startPoint.x + 128,
                         /*endy  */ startPoint.y + Math.min((int) (graphHeight * (1 - rel_portion)), graphHeight - 1) + 1,
                         /*color */ 0xffebd534);
-                REIHelper.getInstance().queueTooltip(Tooltip.create(new Point(mouseX, mouseY), new LiteralText("Y: " + mouseHeight), new LiteralText("Chance: " + LootDisplay.FORMAT_MORE.format(worldGenState.getPortionAtHeight(block, mouseHeight) * 100) + "%")));
+                REIRuntime.getInstance().queueTooltip(Tooltip.create(new Point(mouseX, mouseY), new LiteralText("Y: " + mouseHeight), new LiteralText("Chance: " + LootDisplay.FORMAT_MORE.format(worldGenState.getPortionAtHeight(block, mouseHeight) * 100) + "%")));
             }
         }));
-        if (display.getOutputEntries().get(0).getType() == EntryStack.Type.RENDER)
-            widgets.add(Widgets.createSlot(new Point(bounds.getMaxX() - (16), bounds.getMinY() + 3)).entries(display.getOutputEntries()).noFavoritesInteractable());
-        else
-            widgets.add(Widgets.createSlot(new Point(bounds.getMaxX() - (16), bounds.getMinY() + 3)).entries(display.getOutputEntries()));
+        widgets.add(Widgets.createSlot(new Point(bounds.getMaxX() - (16), bounds.getMinY() + 3)).entries(display.getOutputEntries().get(0)));
         widgets.add(Widgets.createLabel(new Point(bounds.x + 65, bounds.getMaxY() - 10), new LiteralText(Registry.BLOCK.getId(block).toString())).noShadow().color(-12566464, -4473925));
         return widgets;
     }

@@ -18,10 +18,10 @@ jobs:
           distribution: ${{ matrix.java-distro }}
       - name: Grant Execute Permission
         run: chmod +x gradlew
-      - name: Build with Gradle
+      - name: Build
         run: ./gradlew build --stacktrace
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v1
         with:
-          name: build-artifacts
+          name: Upload Path
           path: build/libs

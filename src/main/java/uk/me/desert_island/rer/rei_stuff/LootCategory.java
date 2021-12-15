@@ -23,6 +23,7 @@ import me.shedaniel.rei.api.common.util.EntryStacks;
 import me.shedaniel.rei.impl.client.gui.widget.EntryWidget;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.client.gui.Drawable;
 import net.minecraft.client.gui.Element;
 import net.minecraft.client.render.*;
 import net.minecraft.client.resource.language.I18n;
@@ -39,6 +40,7 @@ import org.apache.commons.lang3.StringUtils;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
+import org.jetbrains.annotations.Nullable;
 
 @Environment(EnvType.CLIENT)
 public class LootCategory implements DisplayCategory<LootDisplay> {
@@ -117,7 +119,7 @@ public class LootCategory implements DisplayCategory<LootDisplay> {
             if (stacks.isEmpty())
                 return;
             @SuppressWarnings("IntegerDivisionInFloatingPointContext")
-            EntryStack<?> stack = stacks.get(stacks.size() == 1 ? 0 : MathHelper.floor((System.currentTimeMillis() / 500 % (double) stacks.size()) / 1f));
+            EntryStack<?> stack = stacks.get(stacks.size() == 1 ? 0 : MathHelper.floor((System.currentTimeMillis() / 500 % (double) stacks.size())));
             int count = stack.<ItemStack>castValue().getCount();
             if (count == 1)
                 return;
@@ -125,7 +127,7 @@ public class LootCategory implements DisplayCategory<LootDisplay> {
             String string = String.valueOf(count);
             matrices.translate(0.0D, 0.0D, getZ() + 400.0F);
             VertexConsumerProvider.Immediate immediate = VertexConsumerProvider.immediate(Tessellator.getInstance().getBuffer());
-            font.draw(string, (float) (innerBounds.x + 19 - 2 - font.getWidth(string)), (float) (innerBounds.y + 6 + 3), 16777215, true, matrices.peek().getModel(), immediate, false, 0, 15728880);
+            font.draw(string, (float) (innerBounds.x + 19 - 2 - font.getWidth(string)), (float) (innerBounds.y + 6 + 3), 16777215, true, matrices.peek().getPositionMatrix(), immediate, false, 0, 15728880);
             immediate.draw();
             matrices.pop();
         }
@@ -227,7 +229,7 @@ public class LootCategory implements DisplayCategory<LootDisplay> {
                         break;
                     EntryWidget widget = widgets.get(index);
                     widget.getBounds().setLocation(bounds.x + 1 + x * 18, (int) (bounds.y + 1 + y * 18 - scroll));
-                    widget.render(matrices, mouseX, mouseY, delta);
+                    ((Drawable) widget).render(matrices, mouseX, mouseY, delta);
                 }
             }
             ScissorsHandler.INSTANCE.removeLastScissor();
@@ -299,9 +301,29 @@ public class LootCategory implements DisplayCategory<LootDisplay> {
             return false;
         }
 
+        @Nullable
+        @Override
+        public Element getFocused() {
+            return null;
+        }
+
+        @Override
+        public void setFocused(@Nullable Element focused) {
+        }
+
         @Override
         public List<? extends Element> children() {
             return widgets;
         }
+
+        @Override
+        public boolean isDragging() {
+            return false;
+        }
+
+        @Override
+        public void setDragging(boolean dragging) {
+        }
+
     }
 }

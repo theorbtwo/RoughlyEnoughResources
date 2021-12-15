@@ -12,10 +12,6 @@ import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.World;
 import uk.me.desert_island.rer.client.ClientLootCache;
 import uk.me.desert_island.rer.client.ClientWorldGenState;
-import net.minecraft.village.VillagerProfession;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import net.minecraft.village.TradeOffer;
-import net.minecraft.village.TradeOffers;
 
 import static uk.me.desert_island.rer.RoughlyEnoughResources.SEND_LOOT_INFO;
 import static uk.me.desert_island.rer.RoughlyEnoughResources.SEND_WORLD_GEN_STATE_START;
@@ -24,11 +20,7 @@ import static uk.me.desert_island.rer.RoughlyEnoughResources.SEND_WORLD_GEN_STAT
 
 import static io.netty.buffer.Unpooled.*;
 
-import java.util.Random;
-
 import io.netty.buffer.CompositeByteBuf;
-
-import static net.minecraft.village.TradeOffers.PROFESSION_TO_LEVELED_TRADE;
 
 @Environment(EnvType.CLIENT)
 public class RoughlyEnoughResourcesClient implements ClientModInitializer {

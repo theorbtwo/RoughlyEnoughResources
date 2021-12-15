@@ -31,11 +31,8 @@ public class RoughlyEnoughResources implements ModInitializer {
     @Override
     public void onInitialize() {
         RERUtils.LOGGER.info("RoughlyEnoughPacketSize?  Possibly.");
-        ServerPlayNetworking.registerGlobalReceiver(ASK_SYNC_INFO, (server, player, handler, buf, responseSender) -> {
-            server.execute(() -> {
-                sendLootToPlayers(server, Collections.singletonList(player));
-            });
-        });
+        ServerPlayNetworking.registerGlobalReceiver(ASK_SYNC_INFO, (server, player, handler, buf, responseSender) ->
+                server.execute(() -> sendLootToPlayers(server, Collections.singletonList(player))));
     }
 
     public static void sendLootToPlayers(MinecraftServer server, List<ServerPlayerEntity> players) {

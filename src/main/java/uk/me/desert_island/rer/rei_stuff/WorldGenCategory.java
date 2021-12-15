@@ -68,7 +68,7 @@ public class WorldGenCategory implements DisplayCategory<WorldGenDisplay> {
                 if (stacks.isEmpty()) {
                     return EntryStack.empty();
                 } else {
-                    return stacks.size() == 1 ? stacks.get(0) : stacks.get(MathHelper.floor((double) (System.currentTimeMillis() / 500L) % (double) stacks.size() / 1.0D));
+                    return stacks.size() == 1 ? stacks.get(0) : stacks.get(MathHelper.floor((double) (System.currentTimeMillis() / 500L) % (double) stacks.size()));
                 }
             }
 

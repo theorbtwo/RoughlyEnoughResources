@@ -1,0 +1,19 @@
+{
+  "rer.worldgen.category": "%s Generation",
+  "rer.loot.category": "Block Drops",
+  "rer.entity.loot.category": "Mob-Beuteabwurf",
+  "rer.condition.or": "%s oder %s",
+  "rer.condition.invert": "nicht %s",
+  "rer.condition.enchantment": "mit %s",
+  "rer.condition.item": "mit %s",
+  "rer.condition.chance": "%s%%",
+  "rer.condition.chance.looting": "%s%% und mehr mit Plünderung",
+  "rer.condition.killedByPlayer": "wenn von Spieler getötet",
+  "rer.condition.onFire": "wenn brennend",
+  "rer.function.and": "%s + %s",
+  "rer.function.count": "Anzahl: %s",
+  "rer.function.atLeast": "mindestens %d",
+  "rer.function.atMost": "höchstens %d",
+  "rer.function.bonus.enchant": "mehr mit %s",
+  "rer.loot.range": "%d bis %d"
+}

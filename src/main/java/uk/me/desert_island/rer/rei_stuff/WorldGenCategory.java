@@ -182,11 +182,11 @@ public class WorldGenCategory implements DisplayCategory<WorldGenDisplay> {
         widgets.add(Widgets.createLabel(new Point(bounds.x + 65, bounds.getMaxY() - 10), new LiteralText(Registry.BLOCK.getId(block).toString())).noShadow().color(-12566464, -4473925));
 
         Button scrollLeft = Widgets.createButton(new Rectangle(bounds.x + 1, bounds.getMaxY(), 16, 16), new LiteralText("-"));
-        scrollLeft.setOnClick(button -> scroll(-10));
+        scrollLeft.setOnClick(button -> scroll(-50));
         widgets.add(scrollLeft);
 
         Button scrollRight = Widgets.createButton(new Rectangle(bounds.x + 114, bounds.getMaxY(), 16, 16), new LiteralText("+"));
-        scrollRight.setOnClick(button -> scroll(10));
+        scrollRight.setOnClick(button -> scroll(50));
         widgets.add(scrollRight);
 
         return widgets;

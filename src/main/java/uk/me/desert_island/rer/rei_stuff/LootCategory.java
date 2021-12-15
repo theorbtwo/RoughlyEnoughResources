@@ -102,7 +102,7 @@ public class LootCategory implements DisplayCategory<LootDisplay> {
         public TooltipEntryWidget(Rectangle outputsArea, int x, int y, EntryStack<?> original, List<Text> lore, List<EntryStack<?>> stacks) {
             super(new Point(x, y));
             if (lore != null) {
-                this.original = original.copy().setting(EntryStack.Settings.TOOLTIP_APPEND_EXTRA, entryStack -> lore);
+                this.original = original.copy().tooltip(entryStack -> lore);
             } else {
                 this.original = original;
             }

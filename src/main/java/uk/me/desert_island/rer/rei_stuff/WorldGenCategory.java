@@ -39,6 +39,7 @@ import java.util.function.Function;
 @Environment(EnvType.CLIENT)
 public class WorldGenCategory implements DisplayCategory<WorldGenDisplay> {
     @Override
+    @SuppressWarnings("unchecked")
     public CategoryIdentifier<? extends WorldGenDisplay> getCategoryIdentifier() {
         return (CategoryIdentifier<? extends WorldGenDisplay>) WORLD_IDENTIFIER_MAP.get(world);
     }

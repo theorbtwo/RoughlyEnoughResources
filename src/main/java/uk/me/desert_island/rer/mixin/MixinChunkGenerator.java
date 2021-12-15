@@ -16,6 +16,10 @@ import uk.me.desert_island.rer.WorldGenState;
 
 import java.util.concurrent.atomic.AtomicLongArray;
 
+import static uk.me.desert_island.rer.RoughlyEnoughResources.MAX_WORLD_Y;
+import static uk.me.desert_island.rer.RoughlyEnoughResources.MIN_WORLD_Y;
+import static uk.me.desert_island.rer.RoughlyEnoughResources.WORLD_HEIGHT;
+
 @Mixin(ChunkGenerator.class)
 public class MixinChunkGenerator {
     @Inject(at = @At("RETURN"), method = "generateFeatures")
@@ -31,22 +35,21 @@ public class MixinChunkGenerator {
 
         WorldGenState state = WorldGenState.byWorld(world.getRegistryKey());
 
-        for (int y = 0; y < 128; y++) {
+        for (int y = MIN_WORLD_Y; y < MAX_WORLD_Y; y++) {
             for (int x = centerBlockX - 8; x < centerBlockX + 8; x++) {
                 /* use heightmap or something instead of hardcoding this? */
                 for (int z = centerBlockZ - 8; z < centerBlockZ + 8; z++) {
                     Block block = chunk.getBlockState(new BlockPos(x, y, z)).getBlock();
 
-                    state.totalCountsAtLevelsMap.getAndIncrement(y);
+                    state.totalCountsAtLevelsMap.getAndIncrement(y - MIN_WORLD_Y);
 
                     AtomicLongArray levelCount = state.levelCountsMap.get(block);
                     if (levelCount == null) {
-                        levelCount = new AtomicLongArray(128);
+                        levelCount = new AtomicLongArray(WORLD_HEIGHT);
                         state.levelCountsMap.put(block, levelCount);
                     }
 
-                    levelCount.getAndIncrement(y);
-                    
+                    levelCount.getAndIncrement(y - MIN_WORLD_Y);
                     state.markPlayerDirty(block);
                 }
             }

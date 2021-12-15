@@ -8,17 +8,18 @@ import net.minecraft.util.registry.Registry;
 import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.World;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLongArray;
+
+import static uk.me.desert_island.rer.RoughlyEnoughResources.WORLD_HEIGHT;
 
 @Environment(EnvType.CLIENT)
 public class ClientWorldGenState {
     public static final Map<RegistryKey<World>, ClientWorldGenState> dimensionTypeStateMap = new ConcurrentHashMap<>();
 
     public Map<Block, AtomicLongArray> levelCountsMap = new ConcurrentHashMap<>();
-    public AtomicLongArray totalCountsAtLevelsMap = new AtomicLongArray(128);
+    public AtomicLongArray totalCountsAtLevelsMap = new AtomicLongArray(WORLD_HEIGHT);
 
     public static ClientWorldGenState byWorld(World world) {
         return byWorld(world.getRegistryKey());
@@ -47,7 +48,7 @@ public class ClientWorldGenState {
             while (buf.isReadable()) {
                 int blockId = buf.readInt();
                 Block block = Registry.BLOCK.get(blockId);
-                AtomicLongArray levelCount = levelCountsMap.put(block, new AtomicLongArray(buf.readLongArray(null)));
+                levelCountsMap.put(block, new AtomicLongArray(buf.readLongArray(null)));
             }
         } else {
             while (buf.isReadable()) {
@@ -58,7 +59,7 @@ public class ClientWorldGenState {
                     levelCountsMap.put(block, new AtomicLongArray(buf.readLongArray(null)));
                 } else {
                     long[] countsForBlockTag = buf.readLongArray(null);
-                    for (int i = 0; i < 128; i++) {
+                    for (int i = 0; i < countsForBlockTag.length; i++) {
                         long l = countsForBlockTag[i];
                         if (l >= 0)
                             levelCount.set(i, l);
@@ -90,7 +91,7 @@ public class ClientWorldGenState {
     public double getMaxPortion(Block block) {
         double maxPortion = 0.0;
 
-        for (int y = 0; y < 128; y++) {
+        for (int y = 0; y < totalCountsAtLevelsMap.length(); y++) {
             maxPortion = Math.max(maxPortion, getPortionAtHeight(block, y));
         }
         return maxPortion;

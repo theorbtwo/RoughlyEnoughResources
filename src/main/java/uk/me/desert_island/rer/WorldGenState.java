@@ -26,6 +26,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLongArray;
 import java.util.concurrent.locks.ReentrantLock;
 
+import static uk.me.desert_island.rer.RoughlyEnoughResources.WORLD_HEIGHT;
+
 public class WorldGenState extends PersistentState {
     public static Map<RegistryKey<World>, PersistentStateManager> persistentStateManagerMap = new HashMap<>();
     private static final Logger LOGGER = LogManager.getFormatterLogger("rer-wgs");
@@ -100,7 +102,7 @@ public class WorldGenState extends PersistentState {
     }
 
     public Map<Block, AtomicLongArray> levelCountsMap = new ConcurrentHashMap<>();
-    public AtomicLongArray totalCountsAtLevelsMap = new AtomicLongArray(128);
+    public AtomicLongArray totalCountsAtLevelsMap = new AtomicLongArray(WORLD_HEIGHT);
     public final int CURRENT_VERSION = 0;
 
     /*
@@ -123,7 +125,7 @@ public class WorldGenState extends PersistentState {
         }
 
         levelCountsMap.clear();
-        totalCountsAtLevelsMap = new AtomicLongArray(128);
+        totalCountsAtLevelsMap = new AtomicLongArray(WORLD_HEIGHT);
 
         long[] totalCountsAtLevels = root.getLongArray("total_counts_at_level");
         for (int i = 0; i < totalCountsAtLevels.length; i++) {
@@ -133,10 +135,10 @@ public class WorldGenState extends PersistentState {
         NbtCompound levelCountsForBlock = root.getCompound("level_counts_for_block");
         for (String blockIdString : levelCountsForBlock.getKeys()) {
             Block block = Registry.BLOCK.get(new Identifier(blockIdString));
-            levelCountsMap.put(block, new AtomicLongArray(128));
+            levelCountsMap.put(block, new AtomicLongArray(totalCountsAtLevels.length));
             AtomicLongArray levelCount = levelCountsMap.get(block);
             long[] countsForBlockTag = levelCountsForBlock.getLongArray(blockIdString);
-            for (int i = 0; i < 128; i++) {
+            for (int i = 0; i < countsForBlockTag.length; i++) {
                 levelCount.set(i, countsForBlockTag[i]);
             }
         }
@@ -146,8 +148,8 @@ public class WorldGenState extends PersistentState {
     public NbtCompound writeNbt(NbtCompound rootTag) {
         rootTag.putInt("Version", 0);
 
-        long[] totalCountsAtLevelArray = new long[128];
-        for (int i = 0; i < 128; i++) {
+        long[] totalCountsAtLevelArray = new long[totalCountsAtLevelsMap.length()];
+        for (int i = 0; i < totalCountsAtLevelArray.length; i++) {
             totalCountsAtLevelArray[i] = totalCountsAtLevelsMap.get(i);
         }
         rootTag.putLongArray("total_counts_at_level", totalCountsAtLevelArray);
@@ -155,8 +157,8 @@ public class WorldGenState extends PersistentState {
         NbtCompound tag = new NbtCompound();
         for (Block block : levelCountsMap.keySet()) {
             AtomicLongArray countsForBlockMap = levelCountsMap.get(block);
-            long[] countsForBlockTag = new long[128];
-            for (int i = 0; i < 128; i++) {
+            long[] countsForBlockTag = new long[countsForBlockMap.length()];
+            for (int i = 0; i < countsForBlockTag.length; i++) {
                 countsForBlockTag[i] = countsForBlockMap.get(i);
             }
             tag.putLongArray(Registry.BLOCK.getId(block).toString(), countsForBlockTag);
@@ -169,8 +171,8 @@ public class WorldGenState extends PersistentState {
     public PacketByteBuf toNetwork(boolean append, PacketByteBuf buf, IntSet allLevels) {
         buf.writeBoolean(append);
         if (allLevels.contains(-1)) {
-            long[] totalCountsAtLevelArray = new long[128];
-            for (int i = 0; i < 128; i++) {
+            long[] totalCountsAtLevelArray = new long[totalCountsAtLevelsMap.length()];
+            for (int i = 0; i < totalCountsAtLevelArray.length; i++) {
                 totalCountsAtLevelArray[i] = totalCountsAtLevelsMap.get(i);
             }
             buf.writeLongArray(totalCountsAtLevelArray);
@@ -181,8 +183,8 @@ public class WorldGenState extends PersistentState {
             AtomicLongArray countsForBlockMap = levelCountsMap.get(block);
 
             if (countsForBlockMap != null) {
-                long[] countsForBlockTag = new long[128];
-                for (int i = 0; i < 128; i++) {
+                long[] countsForBlockTag = new long[countsForBlockMap.length()];
+                for (int i = 0; i < countsForBlockTag.length; i++) {
                     countsForBlockTag[i] = countsForBlockMap.get(i);
                 }
 

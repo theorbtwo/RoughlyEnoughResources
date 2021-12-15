@@ -1,11 +1,13 @@
 package uk.me.desert_island.rer.rei_stuff;
 
 import com.google.common.collect.Maps;
+import com.google.common.primitives.Ints;
 import me.shedaniel.math.Point;
 import me.shedaniel.math.Rectangle;
 import me.shedaniel.rei.api.client.REIRuntime;
 import me.shedaniel.rei.api.client.gui.DisplayRenderer;
 import me.shedaniel.rei.api.client.gui.Renderer;
+import me.shedaniel.rei.api.client.gui.widgets.Button;
 import me.shedaniel.rei.api.client.gui.widgets.Tooltip;
 import me.shedaniel.rei.api.client.gui.widgets.Widget;
 import me.shedaniel.rei.api.client.gui.widgets.Widgets;
@@ -36,6 +38,10 @@ import java.util.Map;
 import java.util.StringJoiner;
 import java.util.function.Function;
 
+import static uk.me.desert_island.rer.RoughlyEnoughResources.MAX_WORLD_Y;
+import static uk.me.desert_island.rer.RoughlyEnoughResources.MIN_WORLD_Y;
+import static uk.me.desert_island.rer.RoughlyEnoughResources.WORLD_HEIGHT;
+
 @Environment(EnvType.CLIENT)
 public class WorldGenCategory implements DisplayCategory<WorldGenDisplay> {
     @Override
@@ -46,6 +52,7 @@ public class WorldGenCategory implements DisplayCategory<WorldGenDisplay> {
 
     static final Map<RegistryKey<World>, CategoryIdentifier<?>> WORLD_IDENTIFIER_MAP = Maps.newHashMap();
     private final RegistryKey<World> world;
+    private int scroll;
 
     public WorldGenCategory(RegistryKey<World> world) {
         WORLD_IDENTIFIER_MAP.put(world, CategoryIdentifier.of("roughlyenoughresources", world.getValue().getPath() + "_worldgen_category"));
@@ -108,6 +115,7 @@ public class WorldGenCategory implements DisplayCategory<WorldGenDisplay> {
 
     @Override
     public List<Widget> setupDisplay(WorldGenDisplay display, Rectangle bounds) {
+        scroll = 0;
         Block block = display.getOutputBlock();
 
         Point startPoint = new Point(bounds.getMinX() + 2, bounds.getMinY() + 3);
@@ -123,10 +131,11 @@ public class WorldGenCategory implements DisplayCategory<WorldGenDisplay> {
             //            RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
             //            MinecraftClient.getInstance().getTextureManager().bindTexture(DefaultPlugin.getDisplayTexture());
 
-            int mouseHeight = mouseX - startPoint.x;
+            int mouseH = mouseX - startPoint.x;
+            int mouseHeight = mouseX - startPoint.x + MIN_WORLD_Y + scroll;
 
             for (int height = 0; height < 128; height++) {
-                double portion = worldGenState.getPortionAtHeight(block, height);
+                double portion = worldGenState.getPortionAtHeight(block, height + scroll);
                 double relPortion;
                 if (maxPortion == 0) {
                     relPortion = 0;
@@ -142,8 +151,9 @@ public class WorldGenCategory implements DisplayCategory<WorldGenDisplay> {
                         /*color */ 0xff000000);
             }
 
-            if (bounds.contains(mouseX, mouseY) && mouseHeight >= 0 && mouseHeight < 128) {
-                double portion = worldGenState.getPortionAtHeight(block, mouseHeight);
+            if (bounds.contains(mouseX, mouseY) && mouseH >= 0 && mouseH < 128 && mouseY < bounds.y + 64
+                    && mouseHeight >= MIN_WORLD_Y && mouseHeight < MAX_WORLD_Y) {
+                double portion = worldGenState.getPortionAtHeight(block, mouseHeight - MIN_WORLD_Y);
                 double rel_portion;
                 if (maxPortion == 0) {
                     rel_portion = 0;
@@ -162,16 +172,32 @@ public class WorldGenCategory implements DisplayCategory<WorldGenDisplay> {
                         /*endx  */ startPoint.x + 128,
                         /*endy  */ startPoint.y + Math.min((int) (graphHeight * (1 - rel_portion)), graphHeight - 1) + 1,
                         /*color */ 0xffebd534);
-                REIRuntime.getInstance().queueTooltip(Tooltip.create(new Point(mouseX, mouseY), new LiteralText("Y: " + mouseHeight), new LiteralText("Chance: " + LootDisplay.FORMAT_MORE.format(worldGenState.getPortionAtHeight(block, mouseHeight) * 100) + "%")));
+                REIRuntime.getInstance().queueTooltip(Tooltip.create(new Point(mouseX, mouseY),
+                        new LiteralText("Y: " + mouseHeight),
+                        new LiteralText("Chance: "
+                                + LootDisplay.FORMAT_MORE.format(portion * 100) + "%")));
             }
         }));
         widgets.add(Widgets.createSlot(new Point(bounds.getMaxX() - (16), bounds.getMinY() + 3)).entries(display.getOutputEntries().get(0)));
         widgets.add(Widgets.createLabel(new Point(bounds.x + 65, bounds.getMaxY() - 10), new LiteralText(Registry.BLOCK.getId(block).toString())).noShadow().color(-12566464, -4473925));
+
+        Button scrollLeft = Widgets.createButton(new Rectangle(bounds.x + 1, bounds.getMaxY(), 16, 16), new LiteralText("-"));
+        scrollLeft.setOnClick(button -> scroll(-10));
+        widgets.add(scrollLeft);
+
+        Button scrollRight = Widgets.createButton(new Rectangle(bounds.x + 114, bounds.getMaxY(), 16, 16), new LiteralText("+"));
+        scrollRight.setOnClick(button -> scroll(10));
+        widgets.add(scrollRight);
+
         return widgets;
     }
 
     @Override
     public int getDisplayHeight() {
         return 76;
+    }
+
+    public void scroll(int incr) {
+        scroll = Ints.constrainToRange(scroll + incr, 0, WORLD_HEIGHT - 128);
     }
 }

@@ -28,14 +28,15 @@ public class RoughlyEnoughResources implements ModInitializer {
     public static final Identifier SEND_LOOT_INFO = new Identifier("roughlyenoughresources", "sli");
     public static final Identifier ASK_SYNC_INFO = new Identifier("roughlyenoughresources", "asi");
 
+    public static final int MIN_WORLD_Y = -64;
+    public static final int MAX_WORLD_Y = 320;
+    public static final int WORLD_HEIGHT = MAX_WORLD_Y - MIN_WORLD_Y;
+
     @Override
     public void onInitialize() {
         RERUtils.LOGGER.info("RoughlyEnoughPacketSize?  Possibly.");
-        ServerPlayNetworking.registerGlobalReceiver(ASK_SYNC_INFO, (server, player, handler, buf, responseSender) -> {
-            server.execute(() -> {
-                sendLootToPlayers(server, Collections.singletonList(player));
-            });
-        });
+        ServerPlayNetworking.registerGlobalReceiver(ASK_SYNC_INFO, (server, player, handler, buf, responseSender) ->
+                server.execute(() -> sendLootToPlayers(server, Collections.singletonList(player))));
     }
 
     public static void sendLootToPlayers(MinecraftServer server, List<ServerPlayerEntity> players) {

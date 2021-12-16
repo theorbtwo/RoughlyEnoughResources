@@ -42,7 +42,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @SuppressWarnings("StatementWithEmptyBody")
 @Environment(EnvType.CLIENT)
@@ -237,7 +236,7 @@ public abstract class LootDisplay implements Display {
                         output.output = EntryIngredient.of(stack);
                         output.original = stack.copy();
                         return output;
-                    }).collect(Collectors.toList()));
+                    }).toList());
                 break;
             default:
                 RERUtils.LOGGER.debug("Don't know how to deal with entry of type %s (%s)", type, object);
@@ -309,7 +308,7 @@ public abstract class LootDisplay implements Display {
             Integer max = functionObject.get("limit").getAsJsonObject().has("max") ? functionObject.get("limit").getAsJsonObject().get("max").getAsInt() : null;
             for (LootOutput output : outputs) {
                 for (EntryStack<?> stack : output.output) {
-                    ItemStack value = stack.<ItemStack>castValue();
+                    ItemStack value = stack.castValue();
                     if (min != null) {
                         int amount = stack.isEmpty() ? 0 : value.getCount();
                         if (amount < min) {

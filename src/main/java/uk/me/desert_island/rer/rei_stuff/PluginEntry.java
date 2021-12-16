@@ -20,6 +20,8 @@ import uk.me.desert_island.rer.client.ClientWorldGenState;
 
 import java.util.concurrent.atomic.AtomicLongArray;
 
+import static uk.me.desert_island.rer.RoughlyEnoughResources.WORLD_HEIGHT;
+
 @Environment(EnvType.CLIENT)
 public class PluginEntry implements REIClientPlugin {
     public static final Identifier PLUGIN_ID = new Identifier("roughlyenoughresources", "rer_plugin");
@@ -68,7 +70,7 @@ public class PluginEntry implements REIClientPlugin {
                 AtomicLongArray levelCount = state.levelCountsMap.get(worldGenDisplay.getOutputBlock());
                 if (levelCount == null)
                     return EventResult.interruptFalse();
-                for (int i = 0; i < 128; i++) {
+                for (int i = 0; i < WORLD_HEIGHT; i++) {
                     if (levelCount.get(i) > 0)
                         return EventResult.pass();
                 }

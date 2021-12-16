@@ -1,7 +1,7 @@
 {
   "required": true,
   "package": "uk.me.desert_island.rer.mixin",
-  "compatibilityLevel": "JAVA_8",
+  "compatibilityLevel": "JAVA_17",
   "mixins": ["FluidBlockHooks", "IdentifierHooks", "MixinChunkGenerator", "MixinMinecraftServer", "MixinPlayerManager", "MixinServerWorld"],
   "client": [
     "MixinClientConnection"

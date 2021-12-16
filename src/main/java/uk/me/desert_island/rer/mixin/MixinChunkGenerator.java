@@ -1,8 +1,10 @@
 package uk.me.desert_island.rer.mixin;
 
 import net.minecraft.block.Block;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.ChunkRegion;
+import net.minecraft.world.StructureWorldAccess;
+import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.gen.StructureAccessor;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
 import org.spongepowered.asm.mixin.Mixin;
@@ -14,34 +16,40 @@ import uk.me.desert_island.rer.WorldGenState;
 
 import java.util.concurrent.atomic.AtomicLongArray;
 
+import static uk.me.desert_island.rer.RoughlyEnoughResources.MAX_WORLD_Y;
+import static uk.me.desert_island.rer.RoughlyEnoughResources.MIN_WORLD_Y;
+import static uk.me.desert_island.rer.RoughlyEnoughResources.WORLD_HEIGHT;
+
 @Mixin(ChunkGenerator.class)
 public class MixinChunkGenerator {
     @Inject(at = @At("RETURN"), method = "generateFeatures")
-    private void generateFeatures(ChunkRegion region, StructureAccessor structureAccessor, CallbackInfo ci) {
+    private void generateFeatures(StructureWorldAccess swa, Chunk chunk, StructureAccessor structureAccessor,
+                                  CallbackInfo ci) {
         long startTime = System.nanoTime();
-        int centerBlockX = region.getCenterPos().getCenterX();    
-        int centerBlockZ = region.getCenterPos().getCenterZ();    
+
+        ServerWorld world = swa.toServerWorld();
+        int centerBlockX = chunk.getPos().getCenterX();
+        int centerBlockZ = chunk.getPos().getCenterZ();
 
         RERUtils.LOGGER.debug("generateFeatures for block %d,%d", centerBlockX, centerBlockZ);
 
-        WorldGenState state = WorldGenState.byWorld(region.toServerWorld().getRegistryKey());
+        WorldGenState state = WorldGenState.byWorld(world.getRegistryKey());
 
-        for (int y = 0; y < 128; y++) {
+        for (int y = MIN_WORLD_Y; y < MAX_WORLD_Y; y++) {
             for (int x = centerBlockX - 8; x < centerBlockX + 8; x++) {
                 /* use heightmap or something instead of hardcoding this? */
                 for (int z = centerBlockZ - 8; z < centerBlockZ + 8; z++) {
-                    Block block = region.getBlockState(new BlockPos(x, y, z)).getBlock();
+                    Block block = chunk.getBlockState(new BlockPos(x, y, z)).getBlock();
 
-                    state.totalCountsAtLevelsMap.set(y, state.totalCountsAtLevelsMap.get(y) + 1);
+                    state.totalCountsAtLevelsMap.getAndIncrement(y - MIN_WORLD_Y);
 
                     AtomicLongArray levelCount = state.levelCountsMap.get(block);
                     if (levelCount == null) {
-                        levelCount = new AtomicLongArray(128);
+                        levelCount = new AtomicLongArray(WORLD_HEIGHT);
                         state.levelCountsMap.put(block, levelCount);
                     }
 
-                    levelCount.set(y, levelCount.get(y) + 1);
-                    
+                    levelCount.getAndIncrement(y - MIN_WORLD_Y);
                     state.markPlayerDirty(block);
                 }
             }

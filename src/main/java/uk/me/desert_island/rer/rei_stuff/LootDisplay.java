@@ -30,7 +30,6 @@ import net.minecraft.tag.ItemTags;
 import net.minecraft.tag.Tag;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.JsonHelper;
-import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.registry.Registry;
 import uk.me.desert_island.rer.RERUtils;
 import uk.me.desert_island.rer.RoughlyEnoughResources;
@@ -262,6 +261,15 @@ public abstract class LootDisplay implements Display {
         return outputs;
     }
 
+    public static Integer tryGetNumber(JsonObject obj, String field) {
+        var val = obj.get(field);
+        if (val == null || !val.isJsonPrimitive()) {
+            return null;
+        }
+
+        return val.getAsInt();
+    }
+
     private List<LootOutput> munchLootFunctions(JsonElement lootFunction, List<LootOutput> outputs) {
         JsonObject functionObject = lootFunction.getAsJsonObject();
         String kind = new Identifier(functionObject.get("function").getAsString()).toString();
@@ -274,38 +282,46 @@ public abstract class LootDisplay implements Display {
                 newOutputs.add(output.copy());
             }
         }
-        if (kind.equals("minecraft:set_count") && functionObject.has("count") && functionObject.get("count").isJsonPrimitive()) {
-            int count = functionObject.get("count").getAsInt();
-            for (LootOutput output : outputs) {
-                for (EntryStack<?> stack : output.output) {
-                    stack.<ItemStack>castValue().setCount(count);
-                }
-                output.setCountText(String.valueOf(count));
-            }
-            createNew = true;
-        } else if (kind.equals("minecraft:set_count") && functionObject.has("count") && functionObject.get("count").isJsonObject()) {
-            String type = new Identifier(functionObject.get("count").getAsJsonObject().get("type").getAsString()).toString();
-            if (type.equalsIgnoreCase("minecraft:uniform")) {
-                int min = MathHelper.floor(functionObject.get("count").getAsJsonObject().get("min").getAsFloat());
-                int max = MathHelper.floor(functionObject.get("count").getAsJsonObject().get("max").getAsFloat());
-                int no = max - min + 1;
-                for (LootOutput output : outputs) {
-                    ArrayList<EntryStack<?>> newList = new ArrayList<>(output.output);
-                    EntryStack<?> first = output.output.get(0);
-                    while (newList.size() < no) {
-                        newList.add(first.copy());
-                    }
-                    for (int i = 0; i < no; i++) {
-                        newList.get(i).<ItemStack>castValue().setCount(min + i);
-                    }
-                    output.output = EntryIngredient.of(newList);
-                    output.setCountText(I18n.translate("rer.loot.range", min, max));
-                }
+        if (kind.equals("minecraft:set_count") && functionObject.has("count")) {
+            JsonElement countEl = functionObject.get("count");
+            if (countEl.isJsonPrimitive()) {
                 createNew = true;
+                int count = countEl.getAsInt();
+                for (LootOutput output : outputs) {
+                    for (EntryStack<?> stack : output.output) {
+                        stack.<ItemStack>castValue().setCount(count);
+                    }
+                    output.setCountText(String.valueOf(count));
+                }
+            } else if (countEl.isJsonObject()) {
+                String type = new Identifier(countEl.getAsJsonObject().get("type").getAsString()).toString();
+                if (type.equalsIgnoreCase("minecraft:uniform")) {
+                    Integer min = tryGetNumber(countEl.getAsJsonObject(), "min");
+                    Integer max = tryGetNumber(countEl.getAsJsonObject(), "max");
+                    int no = max != null && min != null ? max - min + 1 : 0;
+                    for (LootOutput output : outputs) {
+                        ArrayList<EntryStack<?>> newList = new ArrayList<>(output.output);
+                        EntryStack<?> first = output.output.get(0);
+                        while (newList.size() < no) {
+                            newList.add(first.copy());
+                        }
+                        for (int i = 0; i < no; i++) {
+                            newList.get(i).<ItemStack>castValue().setCount(min + i);
+                        }
+                        output.output = EntryIngredient.of(newList);
+                        if (min != null && max != null)
+                            output.setCountText(I18n.translate("rer.loot.range", min, max));
+                        else if (min != null)
+                            output.setCountText(I18n.translate("rer.function.atLeast", min));
+                        else if (max != null)
+                            output.setCountText(I18n.translate("rer.function.atMost", max));
+                    }
+                    createNew = min != null || max != null;
+                }
             }
         } else if (kind.equals("minecraft:limit_count") && functionObject.has("limit") && functionObject.get("limit").isJsonObject()) {
-            Integer min = functionObject.get("limit").getAsJsonObject().has("min") ? functionObject.get("limit").getAsJsonObject().get("min").getAsInt() : null;
-            Integer max = functionObject.get("limit").getAsJsonObject().has("max") ? functionObject.get("limit").getAsJsonObject().get("max").getAsInt() : null;
+            Integer min = tryGetNumber(functionObject.get("limit").getAsJsonObject(), "min");
+            Integer max = tryGetNumber(functionObject.get("limit").getAsJsonObject(), "max");
             for (LootOutput output : outputs) {
                 for (EntryStack<?> stack : output.output) {
                     ItemStack value = stack.castValue();
@@ -327,8 +343,7 @@ public abstract class LootDisplay implements Display {
                 if (max != null)
                     output.addExtraTextCount(I18n.translate("rer.function.atMost", max));
             }
-            if (min != null || max != null)
-                createNew = true;
+            createNew = min != null || max != null;
         } else if (kind.equals("minecraft:copy_nbt") || kind.equals("minecraft:copy_name") || kind.equals("minecraft:explosion_decay") || kind.equals("minecraft:set_contents") || kind.equals("minecraft:copy_state")) {
             // Ignored
         } else if (kind.equals("minecraft:set_nbt") && functionObject.has("tag")) {
@@ -468,7 +483,12 @@ public abstract class LootDisplay implements Display {
         if (json == null)
             return Collections.emptyList();
         if (outputs == null || FabricLoader.getInstance().isDevelopmentEnvironment()) {
-            outputs = munchLootSupplierJson(RoughlyEnoughResources.GSON.fromJson(json, JsonElement.class));
+            try {
+                outputs = munchLootSupplierJson(RoughlyEnoughResources.GSON.fromJson(json, JsonElement.class));
+            } catch (Exception e) {
+                RERUtils.LOGGER.warn("Failed to parse loot table '%s': ", lootTableId, e);
+                outputs = Collections.emptyList();
+            }
         }
         return outputs;
     }

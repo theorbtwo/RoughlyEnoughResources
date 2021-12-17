@@ -1,6 +1,5 @@
 package uk.me.desert_island.rer.client;
 
-import com.google.common.collect.Maps;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.util.Identifier;

@@ -73,7 +73,9 @@ public class WorldGenState extends PersistentState {
     }
 
     public void sendToPlayers(Iterable<ServerPlayerEntity> player, PacketByteBuf infoBuf, RegistryKey<World> world) {
-        PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer()).writeIdentifier(world.getValue());
+        System.out.println("Size of buffer: " + infoBuf.readableBytes());
+        PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());
+        RoughlyEnoughResources.writeIdentifier(buf, world.getValue());
         buf.writeBytes(infoBuf);
 
         ByteBuf start_bb = Unpooled.buffer().writeInt(buf.readableBytes());
@@ -135,7 +137,7 @@ public class WorldGenState extends PersistentState {
         NbtCompound levelCountsForBlock = root.getCompound("level_counts_for_block");
         for (String blockIdString : levelCountsForBlock.getKeys()) {
             Block block = Registry.BLOCK.get(new Identifier(blockIdString));
-            levelCountsMap.put(block, new AtomicLongArray(totalCountsAtLevels.length));
+            levelCountsMap.put(block, new AtomicLongArray(WORLD_HEIGHT));
             AtomicLongArray levelCount = levelCountsMap.get(block);
             long[] countsForBlockTag = levelCountsForBlock.getLongArray(blockIdString);
             for (int i = 0; i < countsForBlockTag.length; i++) {
@@ -168,6 +170,15 @@ public class WorldGenState extends PersistentState {
         return rootTag;
     }
 
+    private static void writeVarLongArray(PacketByteBuf buf, long[] array) {
+        buf.writeVarInt(array.length);
+        int length = array.length;
+
+        for (int var4 = 0; var4 < length; ++var4) {
+            buf.writeVarLong(array[var4]);
+        }
+    }
+
     public PacketByteBuf toNetwork(boolean append, PacketByteBuf buf, IntSet allLevels) {
         buf.writeBoolean(append);
         if (allLevels.contains(-1)) {
@@ -175,7 +186,7 @@ public class WorldGenState extends PersistentState {
             for (int i = 0; i < totalCountsAtLevelArray.length; i++) {
                 totalCountsAtLevelArray[i] = totalCountsAtLevelsMap.get(i);
             }
-            buf.writeLongArray(totalCountsAtLevelArray);
+            writeVarLongArray(buf, totalCountsAtLevelArray);
             allLevels.remove(-1);
         }
         for (int level : allLevels) {
@@ -188,8 +199,8 @@ public class WorldGenState extends PersistentState {
                     countsForBlockTag[i] = countsForBlockMap.get(i);
                 }
 
-                buf.writeInt(level);
-                buf.writeLongArray(countsForBlockTag);
+                buf.writeVarInt(level);
+                writeVarLongArray(buf, countsForBlockTag);
             }
         }
 

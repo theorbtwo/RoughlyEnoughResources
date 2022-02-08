@@ -1,5 +1,7 @@
 package uk.me.desert_island.rer;
 
+import com.google.gson.JsonElement;
+import io.netty.buffer.CompositeByteBuf;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -13,14 +15,8 @@ import net.minecraft.world.World;
 import uk.me.desert_island.rer.client.ClientLootCache;
 import uk.me.desert_island.rer.client.ClientWorldGenState;
 
-import static uk.me.desert_island.rer.RoughlyEnoughResources.SEND_LOOT_INFO;
-import static uk.me.desert_island.rer.RoughlyEnoughResources.SEND_WORLD_GEN_STATE_START;
-import static uk.me.desert_island.rer.RoughlyEnoughResources.SEND_WORLD_GEN_STATE_CHUNK;
-import static uk.me.desert_island.rer.RoughlyEnoughResources.SEND_WORLD_GEN_STATE_DONE;
-
-import static io.netty.buffer.Unpooled.*;
-
-import io.netty.buffer.CompositeByteBuf;
+import static io.netty.buffer.Unpooled.compositeBuffer;
+import static uk.me.desert_island.rer.RoughlyEnoughResources.*;
 
 @Environment(EnvType.CLIENT)
 public class RoughlyEnoughResourcesClient implements ClientModInitializer {
@@ -49,7 +45,7 @@ public class RoughlyEnoughResourcesClient implements ClientModInitializer {
                 return;
             }
             ClientWorldGenState state = ClientWorldGenState.byWorld(world);
-            state.readFromServerTag(buf);
+            state.fromNetwork(buf);
             RERUtils.LOGGER.debug("Received data for " + worldId);
         });
 
@@ -59,7 +55,7 @@ public class RoughlyEnoughResourcesClient implements ClientModInitializer {
                 RERUtils.LOGGER.debug("Received %d Loot Info", size);
                 for (int i = 0; i < size; i++) {
                     Identifier identifier = buf.readIdentifier();
-                    String json = buf.readString(262144);
+                    JsonElement json = RoughlyEnoughResources.readJson(buf);
                     ClientLootCache.ID_TO_LOOT.put(identifier, json);
                 }
             });

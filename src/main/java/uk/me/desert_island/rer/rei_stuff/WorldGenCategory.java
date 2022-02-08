@@ -1,7 +1,10 @@
 package uk.me.desert_island.rer.rei_stuff;
 
 import com.google.common.collect.Maps;
-import com.google.common.primitives.Ints;
+import com.google.common.primitives.Doubles;
+import dev.architectury.event.events.client.ClientGuiEvent;
+import me.shedaniel.clothconfig2.api.ScissorsHandler;
+import me.shedaniel.clothconfig2.api.animator.ValueAnimator;
 import me.shedaniel.math.Point;
 import me.shedaniel.math.Rectangle;
 import me.shedaniel.rei.api.client.REIRuntime;
@@ -19,7 +22,9 @@ import me.shedaniel.rei.api.common.util.EntryStacks;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.block.Block;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawableHelper;
+import net.minecraft.client.gui.Element;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
@@ -32,15 +37,10 @@ import org.apache.commons.lang3.StringUtils;
 import uk.me.desert_island.rer.RERUtils;
 import uk.me.desert_island.rer.client.ClientWorldGenState;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.StringJoiner;
+import java.util.*;
 import java.util.function.Function;
 
-import static uk.me.desert_island.rer.RoughlyEnoughResources.MAX_WORLD_Y;
-import static uk.me.desert_island.rer.RoughlyEnoughResources.MIN_WORLD_Y;
-import static uk.me.desert_island.rer.RoughlyEnoughResources.WORLD_HEIGHT;
+import static uk.me.desert_island.rer.RoughlyEnoughResources.*;
 
 @Environment(EnvType.CLIENT)
 public class WorldGenCategory implements DisplayCategory<WorldGenDisplay> {
@@ -52,11 +52,20 @@ public class WorldGenCategory implements DisplayCategory<WorldGenDisplay> {
 
     static final Map<RegistryKey<World>, CategoryIdentifier<?>> WORLD_IDENTIFIER_MAP = Maps.newHashMap();
     private final RegistryKey<World> world;
-    private int scroll;
+    private ValueAnimator<Double> scroll = ValueAnimator.ofDouble();
 
     public WorldGenCategory(RegistryKey<World> world) {
         WORLD_IDENTIFIER_MAP.put(world, CategoryIdentifier.of("roughlyenoughresources", world.getValue().getPath() + "_worldgen_category"));
         this.world = world;
+        ClientGuiEvent.RENDER_POST.register((screen, matrices, mouseX, mouseY, delta) -> {
+            if (scroll.target() < 0) {
+                scroll.setTarget(scroll.target() - scroll.target() * (1.0D - 0.34) * (double) delta / 3.0D);
+            } else if (scroll.target() > WORLD_HEIGHT - 128) {
+                scroll.setTarget((scroll.target() - (WORLD_HEIGHT - 128)) * (1.0D - (1.0D - 0.34) * (double) delta / 3.0D) + WORLD_HEIGHT - 128);
+            }
+
+            scroll.update(delta);
+        });
     }
 
     public RegistryKey<World> getWorld() {
@@ -115,13 +124,32 @@ public class WorldGenCategory implements DisplayCategory<WorldGenDisplay> {
 
     @Override
     public List<Widget> setupDisplay(WorldGenDisplay display, Rectangle bounds) {
-        scroll = 0;
         Block block = display.getOutputBlock();
 
         Point startPoint = new Point(bounds.getMinX() + 2, bounds.getMinY() + 3);
 
         List<Widget> widgets = new LinkedList<>();
         widgets.add(Widgets.createSlotBase(new Rectangle(bounds.x + 1, bounds.y + 2, 130, 62)));
+        widgets.add(new Widget() {
+            @Override
+            public void render(MatrixStack matrices, int mouseX, int mouseY, float delta) {
+            }
+
+            @Override
+            public List<? extends Element> children() {
+                return Collections.emptyList();
+            }
+
+            @Override
+            public boolean mouseScrolled(double mouseX, double mouseY, double amount) {
+                double mouseH = mouseX - startPoint.x;
+                if (bounds.contains(mouseX, mouseY) && mouseH >= 0 && mouseH < 128 && mouseY < bounds.y + 64) {
+                    scroll.setTo(Doubles.constrainToRange(scroll.target() + amount * -20, -100, WORLD_HEIGHT - 128 + 100), 200);
+                    return true;
+                }
+                return super.mouseScrolled(mouseX, mouseY, amount);
+            }
+        });
         widgets.add(Widgets.createDrawableWidget((helper, matrices, mouseX, mouseY, delta) -> {
             ClientWorldGenState worldGenState = ClientWorldGenState.byWorld(display.getWorld());
 
@@ -132,10 +160,10 @@ public class WorldGenCategory implements DisplayCategory<WorldGenDisplay> {
             //            MinecraftClient.getInstance().getTextureManager().bindTexture(DefaultPlugin.getDisplayTexture());
 
             int mouseH = mouseX - startPoint.x;
-            int mouseHeight = mouseX - startPoint.x + MIN_WORLD_Y + scroll;
+            int mouseHeight = mouseX - startPoint.x + MIN_WORLD_Y + (int) Math.round(scroll.value());
 
             for (int height = 0; height < 128; height++) {
-                double portion = worldGenState.getPortionAtHeight(block, height + scroll);
+                double portion = worldGenState.getPortionAtHeight(block, height + (int) Math.round(scroll.value()));
                 double relPortion;
                 if (maxPortion == 0) {
                     relPortion = 0;
@@ -151,8 +179,24 @@ public class WorldGenCategory implements DisplayCategory<WorldGenDisplay> {
                         /*color */ 0xff000000);
             }
 
-            if (bounds.contains(mouseX, mouseY) && mouseH >= 0 && mouseH < 128 && mouseY < bounds.y + 64
-                    && mouseHeight >= MIN_WORLD_Y && mouseHeight < MAX_WORLD_Y) {
+            ScissorsHandler.INSTANCE.scissor(new Rectangle(bounds.x + 2, bounds.y + 2, 128, 62));
+
+            for (int y = Math.max(MIN_WORLD_Y, -60) - 30 * 5; y < MAX_WORLD_Y + 30 * 5; y += 30) {
+                int yOffseted = y - (int) Math.round(scroll.value()) - MIN_WORLD_Y;
+                if (yOffseted >= 0 && yOffseted < 128) {
+                    DrawableHelper.fill(matrices,
+                            /*startx*/ startPoint.x + yOffseted,
+                            /*starty*/ startPoint.y,
+                            /*endx  */ startPoint.x + yOffseted + 1,
+                            /*endy  */ startPoint.y + graphHeight,
+                            /*color */ 0xff444444);
+                }
+                MinecraftClient.getInstance().textRenderer.draw(matrices, y + "", startPoint.x + yOffseted + 2, startPoint.y + 2, 0xff444444);
+            }
+
+            ScissorsHandler.INSTANCE.removeLastScissor();
+
+            if (bounds.contains(mouseX, mouseY) && mouseH >= 0 && mouseH < 128 && mouseY < bounds.y + 64 && mouseHeight >= MIN_WORLD_Y && mouseHeight < MAX_WORLD_Y) {
                 double portion = worldGenState.getPortionAtHeight(block, mouseHeight - MIN_WORLD_Y);
                 double rel_portion;
                 if (maxPortion == 0) {
@@ -172,20 +216,17 @@ public class WorldGenCategory implements DisplayCategory<WorldGenDisplay> {
                         /*endx  */ startPoint.x + 128,
                         /*endy  */ startPoint.y + Math.min((int) (graphHeight * (1 - rel_portion)), graphHeight - 1) + 1,
                         /*color */ 0xffebd534);
-                REIRuntime.getInstance().queueTooltip(Tooltip.create(new Point(mouseX, mouseY),
-                        new LiteralText("Y: " + mouseHeight),
-                        new LiteralText("Chance: "
-                                + LootDisplay.FORMAT_MORE.format(portion * 100) + "%")));
+                REIRuntime.getInstance().queueTooltip(Tooltip.create(new Point(mouseX, mouseY), new LiteralText("Y: " + mouseHeight), new LiteralText("Chance: " + LootDisplay.FORMAT_MORE.format(portion * 100) + "%")));
             }
         }));
         widgets.add(Widgets.createSlot(new Point(bounds.getMaxX() - (16), bounds.getMinY() + 3)).entries(display.getOutputEntries().get(0)));
         widgets.add(Widgets.createLabel(new Point(bounds.x + 65, bounds.getMaxY() - 10), new LiteralText(Registry.BLOCK.getId(block).toString())).noShadow().color(-12566464, -4473925));
 
-        Button scrollLeft = Widgets.createButton(new Rectangle(bounds.x + 1, bounds.getMaxY(), 16, 16), new LiteralText("\u2193"));
+        Button scrollLeft = Widgets.createButton(new Rectangle(bounds.getMaxX() - 16, bounds.getMinY() + 24, 16, 16), new LiteralText("←"));
         scrollLeft.setOnClick(button -> scroll(-50));
         widgets.add(scrollLeft);
 
-        Button scrollRight = Widgets.createButton(new Rectangle(bounds.x + 114, bounds.getMaxY(), 16, 16), new LiteralText("\u2191"));
+        Button scrollRight = Widgets.createButton(new Rectangle(bounds.getMaxX() - 16, bounds.getMinY() + 24 + 20, 16, 16), new LiteralText("→"));
         scrollRight.setOnClick(button -> scroll(50));
         widgets.add(scrollRight);
 
@@ -198,6 +239,6 @@ public class WorldGenCategory implements DisplayCategory<WorldGenDisplay> {
     }
 
     public void scroll(int incr) {
-        scroll = Ints.constrainToRange(scroll + incr, 0, WORLD_HEIGHT - 128);
+        scroll.setTo(Doubles.constrainToRange(scroll.target() + incr, 0, WORLD_HEIGHT - 128), 300);
     }
 }

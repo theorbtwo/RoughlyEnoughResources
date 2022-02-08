@@ -9,6 +9,7 @@ import me.shedaniel.rei.api.common.display.Display;
 import me.shedaniel.rei.api.common.entry.EntryIngredient;
 import me.shedaniel.rei.api.common.entry.EntryStack;
 import me.shedaniel.rei.api.common.entry.type.VanillaEntryTypes;
+import me.shedaniel.rei.api.common.registry.RecipeManagerContext;
 import me.shedaniel.rei.api.common.util.EntryStacks;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -222,9 +223,9 @@ public abstract class LootDisplay implements Display {
                 /* do nothing */
                 break;
             case "minecraft:loot_table":
-                String json = ClientLootCache.ID_TO_LOOT.get(new Identifier(object.get("name").getAsString()));
+                JsonElement json = ClientLootCache.ID_TO_LOOT.get(new Identifier(object.get("name").getAsString()));
                 if (json != null)
-                    outputs.addAll(munchLootSupplierJson(RoughlyEnoughResources.GSON.fromJson(json, JsonElement.class)));
+                    outputs.addAll(munchLootSupplierJson(json));
                 break;
             case "minecraft:tag":
                 Tag<Item> tag = ItemTags.getTagGroup().getTag(new Identifier(object.get("name").getAsString()));
@@ -306,7 +307,9 @@ public abstract class LootDisplay implements Display {
                             newList.add(first.copy());
                         }
                         for (int i = 0; i < no; i++) {
-                            newList.get(i).<ItemStack>castValue().setCount(min + i);
+                            ItemStack value = newList.get(i).castValue();
+                            value.setCount(min + i);
+                            value.getOrCreateNbt().putInt("RER_COUNT", min + i);
                         }
                         output.output = EntryIngredient.of(newList);
                         if (min != null && max != null)
@@ -421,7 +424,7 @@ public abstract class LootDisplay implements Display {
         if (stack.isEmpty() || stack.getType() != VanillaEntryTypes.ITEM)
             return stack.copy();
         ClientWorld world = MinecraftClient.getInstance().world;
-        Optional<SmeltingRecipe> optional = world.getRecipeManager().getFirstMatch(RecipeType.SMELTING, new SimpleInventory(stack.<ItemStack>castValue()), world);
+        Optional<SmeltingRecipe> optional = MinecraftClient.getInstance().getNetworkHandler().getRecipeManager().getFirstMatch(RecipeType.SMELTING, new SimpleInventory(stack.<ItemStack>castValue()), world);
         if (optional.isPresent()) {
             ItemStack itemStack = optional.get().getOutput();
             if (!itemStack.isEmpty()) {
@@ -479,12 +482,12 @@ public abstract class LootDisplay implements Display {
     }
 
     public List<LootOutput> getOutputs() {
-        String json = ClientLootCache.ID_TO_LOOT.get(lootTableId);
+        JsonElement json = ClientLootCache.ID_TO_LOOT.get(lootTableId);
         if (json == null)
             return Collections.emptyList();
         if (outputs == null || FabricLoader.getInstance().isDevelopmentEnvironment()) {
             try {
-                outputs = munchLootSupplierJson(RoughlyEnoughResources.GSON.fromJson(json, JsonElement.class));
+                outputs = munchLootSupplierJson(json);
             } catch (Exception e) {
                 RERUtils.LOGGER.warn("Failed to parse loot table '%s': ", lootTableId, e);
                 outputs = Collections.emptyList();

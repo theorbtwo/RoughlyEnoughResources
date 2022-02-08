@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLongArray;
 
-import static uk.me.desert_island.rer.RoughlyEnoughResources.WORLD_HEIGHT;
+import static uk.me.desert_island.rer.RoughlyEnoughResources.*;
 
 @Environment(EnvType.CLIENT)
 public class ClientWorldGenState {
@@ -29,13 +29,24 @@ public class ClientWorldGenState {
         return dimensionTypeStateMap.computeIfAbsent(dim, k -> new ClientWorldGenState());
     }
 
-    public void readFromServerTag(PacketByteBuf buf) {
+    public long[] readVarLongArray(PacketByteBuf buf) {
+        int length = buf.readVarInt();
+        long[] array = new long[length];
+
+        for (int j = 0; j < length; ++j) {
+            array[j] = buf.readVarLong();
+        }
+
+        return array;
+    }
+
+    public void fromNetwork(PacketByteBuf buf) {
         boolean isAppend = buf.readBoolean();
 
         if (!isAppend) {
-            totalCountsAtLevelsMap = new AtomicLongArray(buf.readLongArray(null));
+            totalCountsAtLevelsMap = new AtomicLongArray(readVarLongArray(buf));
         } else {
-            long[] totalCountsAtLevels = buf.readLongArray(null);
+            long[] totalCountsAtLevels = readVarLongArray(buf);
             for (int i = 0; i < totalCountsAtLevels.length; i++) {
                 long atLevel = totalCountsAtLevels[i];
                 if (atLevel >= 0)
@@ -46,19 +57,19 @@ public class ClientWorldGenState {
         if (!isAppend) {
             levelCountsMap.clear();
             while (buf.isReadable()) {
-                int blockId = buf.readInt();
+                int blockId = buf.readVarInt();
                 Block block = Registry.BLOCK.get(blockId);
-                levelCountsMap.put(block, new AtomicLongArray(buf.readLongArray(null)));
+                levelCountsMap.put(block, new AtomicLongArray(readVarLongArray(buf)));
             }
         } else {
             while (buf.isReadable()) {
-                int blockId = buf.readInt();
+                int blockId = buf.readVarInt();
                 Block block = Registry.BLOCK.get(blockId);
                 AtomicLongArray levelCount = levelCountsMap.get(block);
                 if (levelCount == null) {
-                    levelCountsMap.put(block, new AtomicLongArray(buf.readLongArray(null)));
+                    levelCountsMap.put(block, new AtomicLongArray(readVarLongArray(buf)));
                 } else {
-                    long[] countsForBlockTag = buf.readLongArray(null);
+                    long[] countsForBlockTag = readVarLongArray(buf);
                     for (int i = 0; i < countsForBlockTag.length; i++) {
                         long l = countsForBlockTag[i];
                         if (l >= 0)
@@ -71,6 +82,9 @@ public class ClientWorldGenState {
 
     // Returns 0 if the real result is undefined.
     public double getPortionAtHeight(Block block, int y) {
+        if (y < 0 || y >= WORLD_HEIGHT)
+            return 0;
+        
         AtomicLongArray levelCount = levelCountsMap.getOrDefault(block, null);
 
         if (levelCount == null) {

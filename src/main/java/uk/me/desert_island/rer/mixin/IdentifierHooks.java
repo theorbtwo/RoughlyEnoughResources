@@ -6,8 +6,8 @@ import org.spongepowered.asm.mixin.gen.Invoker;
 
 @Mixin(Identifier.class)
 public interface IdentifierHooks {
-    @Invoker("isNamespaceValid")
-    static boolean isNamespaceValid(String namespace) {
+    @Invoker("isPathValid")
+    static boolean isPathValid(String namespace) {
         return false;
     }
 }

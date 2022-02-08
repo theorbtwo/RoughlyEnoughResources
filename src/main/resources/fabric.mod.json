@@ -35,6 +35,7 @@
   "depends": {
     "fabricloader": ">=0.4.0",
     "fabric": "*",
-    "roughlyenoughitems": "*"
+    "roughlyenoughitems": "*",
+    "cloth-config2": ">=6.2"
   }
 }

@@ -120,9 +120,8 @@ public class LootCategory implements DisplayCategory<LootDisplay> {
                 return;
             @SuppressWarnings("IntegerDivisionInFloatingPointContext")
             EntryStack<?> stack = stacks.get(stacks.size() == 1 ? 0 : MathHelper.floor((System.currentTimeMillis() / 500 % (double) stacks.size())));
-            int count = stack.<ItemStack>castValue().getCount();
-            if (count == 1)
-                return;
+            ItemStack itemStack = stack.castValue();
+            int count = itemStack.getCount();
             matrices.push();
             String string = String.valueOf(count);
             matrices.translate(0.0D, 0.0D, getZ() + 400.0F);
@@ -259,29 +258,27 @@ public class LootCategory implements DisplayCategory<LootDisplay> {
                 boolean hovered = new Rectangle(scrollbarPositionMinX, minY, scrollbarPositionMaxX - scrollbarPositionMinX, height).contains(PointHelper.ofMouse());
                 int bottomC = hovered ? 168 : 128;
                 int topC = hovered ? 222 : 172;
+                
+                RenderSystem.setShader(GameRenderer::getPositionColorShader);
 
                 // Black Bar
-                buffer.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE_COLOR);
-                buffer.vertex(scrollbarPositionMinX, this.getBounds().y + 1, 0.0D).texture(0, 1).color(0, 0, 0, 255).next();
-                buffer.vertex(scrollbarPositionMaxX, this.getBounds().y + 1, 0.0D).texture(1, 1).color(0, 0, 0, 255).next();
-                buffer.vertex(scrollbarPositionMaxX, getBounds().getMaxY() - 1, 0.0D).texture(1, 0).color(0, 0, 0, 255).next();
-                buffer.vertex(scrollbarPositionMinX, getBounds().getMaxY() - 1, 0.0D).texture(0, 0).color(0, 0, 0, 255).next();
-                tessellator.draw();
+                buffer.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
+                buffer.vertex(scrollbarPositionMinX, this.getBounds().y + 1, 0.0D).color(0, 0, 0, 255).next();
+                buffer.vertex(scrollbarPositionMaxX, this.getBounds().y + 1, 0.0D).color(0, 0, 0, 255).next();
+                buffer.vertex(scrollbarPositionMaxX, getBounds().getMaxY() - 1, 0.0D).color(0, 0, 0, 255).next();
+                buffer.vertex(scrollbarPositionMinX, getBounds().getMaxY() - 1, 0.0D).color(0, 0, 0, 255).next();
 
                 // Bottom
-                buffer.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE_COLOR);
-                buffer.vertex(scrollbarPositionMinX, minY + height, 0.0D).texture(0, 1).color(bottomC, bottomC, bottomC, 255).next();
-                buffer.vertex(scrollbarPositionMaxX, minY + height, 0.0D).texture(1, 1).color(bottomC, bottomC, bottomC, 255).next();
-                buffer.vertex(scrollbarPositionMaxX, minY, 0.0D).texture(1, 0).color(bottomC, bottomC, bottomC, 255).next();
-                buffer.vertex(scrollbarPositionMinX, minY, 0.0D).texture(0, 0).color(bottomC, bottomC, bottomC, 255).next();
-                tessellator.draw();
+                buffer.vertex(scrollbarPositionMinX, minY + height, 0.0D).color(bottomC, bottomC, bottomC, 255).next();
+                buffer.vertex(scrollbarPositionMaxX, minY + height, 0.0D).color(bottomC, bottomC, bottomC, 255).next();
+                buffer.vertex(scrollbarPositionMaxX, minY, 0.0D).color(bottomC, bottomC, bottomC, 255).next();
+                buffer.vertex(scrollbarPositionMinX, minY, 0.0D).color(bottomC, bottomC, bottomC, 255).next();
 
                 // Top
-                buffer.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE_COLOR);
-                buffer.vertex(scrollbarPositionMinX, (minY + height - 1), 0.0D).texture(0, 1).color(topC, topC, topC, 255).next();
-                buffer.vertex((scrollbarPositionMaxX - 1), (minY + height - 1), 0.0D).texture(1, 1).color(topC, topC, topC, 255).next();
-                buffer.vertex((scrollbarPositionMaxX - 1), minY, 0.0D).texture(1, 0).color(topC, topC, topC, 255).next();
-                buffer.vertex(scrollbarPositionMinX, minY, 0.0D).texture(0, 0).color(topC, topC, topC, 255).next();
+                buffer.vertex(scrollbarPositionMinX, (minY + height - 1), 0.0D).color(topC, topC, topC, 255).next();
+                buffer.vertex((scrollbarPositionMaxX - 1), (minY + height - 1), 0.0D).color(topC, topC, topC, 255).next();
+                buffer.vertex((scrollbarPositionMaxX - 1), minY, 0.0D).color(topC, topC, topC, 255).next();
+                buffer.vertex(scrollbarPositionMinX, minY, 0.0D).color(topC, topC, topC, 255).next();
                 tessellator.draw();
             }
         }

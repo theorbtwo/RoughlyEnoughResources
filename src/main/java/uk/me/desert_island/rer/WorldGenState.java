@@ -73,7 +73,6 @@ public class WorldGenState extends PersistentState {
     }
 
     public void sendToPlayers(Iterable<ServerPlayerEntity> player, PacketByteBuf infoBuf, RegistryKey<World> world) {
-        System.out.println("Size of buffer: " + infoBuf.readableBytes());
         PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());
         RoughlyEnoughResources.writeIdentifier(buf, world.getValue());
         buf.writeBytes(infoBuf);

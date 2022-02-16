@@ -53,7 +53,6 @@ public class RoughlyEnoughResources implements ModInitializer {
                 writeIdentifier(buf, identifier);
                 writeJson(buf, optimiseTable(GSON.toJsonTree(table)));
             }
-            System.out.println("Size of loot buffer: " + buf.readableBytes());
             for (ServerPlayerEntity player : players) {
                 ServerPlayNetworking.send(player, RoughlyEnoughResources.SEND_LOOT_INFO, new PacketByteBuf(buf.duplicate()));
             }

@@ -165,10 +165,9 @@ public class RoughlyEnoughResources implements ModInitializer {
             } else if (number instanceof Double) {
                 buf.writeByte(10);
                 buf.writeDouble(number.doubleValue());
-            } else if (number instanceof BigDecimal) {
+            } else if (number instanceof BigDecimal decimal) {
                 buf.writeByte(11);
                 // serialize with unscaled value, scale, and precision
-                BigDecimal decimal = (BigDecimal) number;
                 buf.writeByteArray(decimal.unscaledValue().toByteArray());
                 buf.writeInt(decimal.scale());
                 buf.writeInt(decimal.precision());

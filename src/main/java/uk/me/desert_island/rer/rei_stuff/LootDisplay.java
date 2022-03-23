@@ -9,7 +9,6 @@ import me.shedaniel.rei.api.common.display.Display;
 import me.shedaniel.rei.api.common.entry.EntryIngredient;
 import me.shedaniel.rei.api.common.entry.EntryStack;
 import me.shedaniel.rei.api.common.entry.type.VanillaEntryTypes;
-import me.shedaniel.rei.api.common.registry.RecipeManagerContext;
 import me.shedaniel.rei.api.common.util.EntryStacks;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -27,13 +26,11 @@ import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.StringNbtReader;
 import net.minecraft.recipe.RecipeType;
 import net.minecraft.recipe.SmeltingRecipe;
-import net.minecraft.tag.ItemTags;
 import net.minecraft.tag.Tag;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.JsonHelper;
 import net.minecraft.util.registry.Registry;
 import uk.me.desert_island.rer.RERUtils;
-import uk.me.desert_island.rer.RoughlyEnoughResources;
 import uk.me.desert_island.rer.client.ClientLootCache;
 
 import java.text.DecimalFormat;
@@ -228,7 +225,7 @@ public abstract class LootDisplay implements Display {
                     outputs.addAll(munchLootSupplierJson(json));
                 break;
             case "minecraft:tag":
-                Tag<Item> tag = ItemTags.getTagGroup().getTag(new Identifier(object.get("name").getAsString()));
+                Tag<Item> tag = null;// TODO ItemTags.getTagGroup().getTag(new Identifier(object.get("name").getAsString()));
                 if (tag != null)
                     outputs.addAll(tag.values().stream().map(item -> {
                         EntryStack<?> stack = EntryStacks.of(item);

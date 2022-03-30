@@ -26,7 +26,6 @@ import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.StringNbtReader;
 import net.minecraft.recipe.RecipeType;
 import net.minecraft.recipe.SmeltingRecipe;
-import net.minecraft.tag.Tag;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.JsonHelper;
 import net.minecraft.util.registry.Registry;
@@ -225,15 +224,16 @@ public abstract class LootDisplay implements Display {
                     outputs.addAll(munchLootSupplierJson(json));
                 break;
             case "minecraft:tag":
-                Tag<Item> tag = null;// TODO ItemTags.getTagGroup().getTag(new Identifier(object.get("name").getAsString()));
-                if (tag != null)
-                    outputs.addAll(tag.values().stream().map(item -> {
-                        EntryStack<?> stack = EntryStacks.of(item);
-                        LootOutput output = new LootOutput();
-                        output.output = EntryIngredient.of(stack);
-                        output.original = stack.copy();
-                        return output;
-                    }).toList());
+                Identifier id = new Identifier(object.get("name").getAsString());
+                Registry.ITEM.streamTagsAndEntries()
+                        .filter(p -> p.getFirst().id().equals(id))
+                        .forEach(p -> p.getSecond().forEach(entry -> {
+                            EntryStack<?> stack = EntryStacks.of(entry.value());
+                            LootOutput output = new LootOutput();
+                            output.output = EntryIngredient.of(stack);
+                            output.original = stack.copy();
+                            outputs.add(output);
+                        }));
                 break;
             default:
                 RERUtils.LOGGER.debug("Don't know how to deal with entry of type %s (%s)", type, object);

@@ -63,8 +63,7 @@ public class PluginEntry implements REIClientPlugin {
         }
 
         registry.registerVisibilityPredicate((category, display) -> {
-            if (display instanceof WorldGenDisplay) {
-                WorldGenDisplay worldGenDisplay = (WorldGenDisplay) display;
+            if (display instanceof WorldGenDisplay worldGenDisplay) {
                 WorldGenCategory worldGenCategory = (WorldGenCategory) category;
                 ClientWorldGenState state = ClientWorldGenState.byWorld(worldGenCategory.getWorld());
                 AtomicLongArray levelCount = state.levelCountsMap.get(worldGenDisplay.getOutputBlock());

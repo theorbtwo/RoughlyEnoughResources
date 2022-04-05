@@ -1,0 +1,35 @@
+modLoader = "javafml"
+loaderVersion = "[40,)"
+#issueTrackerURL = ""
+license = "Insert License Here"
+
+[[mods]]
+modId = "roughlyenoughresources"
+version = "${version}"
+displayName = "Roughly Enough Resources"
+authors = "shedaniel"
+description = '''
+This mod extends Just Enough Items to show you at what heights in the world you can find various blocks.
+'''
+#logoFile = ""
+
+[[dependencies.roughlyenoughresources]]
+modId = "forge"
+mandatory = true
+versionRange = "[40,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.roughlyenoughresources]]
+modId = "minecraft"
+mandatory = true
+versionRange = "[1.18.2,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.roughlyenoughresources]]
+modId = "architectury"
+mandatory = true
+versionRange = "[4.1.39,)"
+ordering = "AFTER"
+side = "BOTH"

@@ -14,7 +14,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.Items;
@@ -37,7 +37,7 @@ public class EntityLootCategory extends LootCategory {
 
     @Override
     public Component getTitle() {
-        return new TranslatableComponent("rer.entity.loot.category");
+        return Component.translatable("rer.entity.loot.category");
     }
 
     @Override

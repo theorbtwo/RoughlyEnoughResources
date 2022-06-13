@@ -7,6 +7,7 @@ import me.shedaniel.math.Rectangle;
 import me.shedaniel.rei.api.client.REIRuntime;
 import me.shedaniel.rei.api.client.gui.AbstractRenderer;
 import me.shedaniel.rei.api.client.gui.widgets.Tooltip;
+import me.shedaniel.rei.api.client.gui.widgets.TooltipContext;
 import me.shedaniel.rei.api.client.util.ClientEntryStacks;
 import me.shedaniel.rei.api.common.entry.EntryStack;
 import me.shedaniel.rei.api.common.util.EntryStacks;
@@ -111,8 +112,8 @@ public class RERUtils {
                 }
 
                 @Override
-                public @Nullable Tooltip getTooltip(Point mouse) {
-                    return Tooltip.create(mouse, block.getName());
+                public @Nullable Tooltip getTooltip(TooltipContext mouse) {
+                    return Tooltip.create(mouse.getPoint(), block.getName());
                 }
             });
         }

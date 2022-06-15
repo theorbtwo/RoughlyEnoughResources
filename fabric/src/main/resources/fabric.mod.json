@@ -25,7 +25,7 @@
     "client": [
       "uk.me.desert_island.rer.RoughlyEnoughResourcesClient::onInitializeClient"
     ],
-    "rei": [
+    "rei_client": [
       "uk.me.desert_island.rer.rei_stuff.PluginEntry"
     ]
   },

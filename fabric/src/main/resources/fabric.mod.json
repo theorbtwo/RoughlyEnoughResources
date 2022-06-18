@@ -4,7 +4,7 @@
   "version": "${version}",
   
   "name": "Roughly Enough Resources",
-  "description": "This mod extends Roughky Enough Items to show you at what heights in the world you can find various blocks.",
+  "description": "This mod extends Roughly Enough Items to show you at what heights in the world you can find various blocks.",
   "authors": [
     "shedaniel",
     "theorbtwo"
@@ -25,7 +25,7 @@
     "client": [
       "uk.me.desert_island.rer.RoughlyEnoughResourcesClient::onInitializeClient"
     ],
-    "rei": [
+    "rei_client": [
       "uk.me.desert_island.rer.rei_stuff.PluginEntry"
     ]
   },

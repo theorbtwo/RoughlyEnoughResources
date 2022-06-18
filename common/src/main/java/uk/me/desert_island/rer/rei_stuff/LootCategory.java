@@ -11,10 +11,7 @@ import me.shedaniel.math.Point;
 import me.shedaniel.math.Rectangle;
 import me.shedaniel.math.impl.PointHelper;
 import me.shedaniel.rei.api.client.gui.Renderer;
-import me.shedaniel.rei.api.client.gui.widgets.Tooltip;
-import me.shedaniel.rei.api.client.gui.widgets.Widget;
-import me.shedaniel.rei.api.client.gui.widgets.WidgetWithBounds;
-import me.shedaniel.rei.api.client.gui.widgets.Widgets;
+import me.shedaniel.rei.api.client.gui.widgets.*;
 import me.shedaniel.rei.api.client.registry.display.DisplayCategory;
 import me.shedaniel.rei.api.common.category.CategoryIdentifier;
 import me.shedaniel.rei.api.common.entry.EntryIngredient;
@@ -29,8 +26,6 @@ import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TextComponent;
-import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -57,14 +52,14 @@ public class LootCategory implements DisplayCategory<LootDisplay> {
 
     @Override
     public Component getTitle() {
-        return new TranslatableComponent("rer.loot.category");
+        return Component.translatable("rer.loot.category");
     }
 
     @Override
     public List<Widget> setupDisplay(LootDisplay display, Rectangle bounds) {
         List<Widget> widgets = new ArrayList<>();
 
-        widgets.add(Widgets.createLabel(new Point(bounds.getCenterX(), bounds.getMaxY() - (3 + 8 + 2)), new TextComponent("")));
+        widgets.add(Widgets.createLabel(new Point(bounds.getCenterX(), bounds.getMaxY() - (3 + 8 + 2)), Component.literal("")));
 
         Rectangle outputsArea = getOutputsArea(bounds);
         widgets.add(Widgets.createSlotBase(outputsArea));
@@ -82,9 +77,9 @@ public class LootCategory implements DisplayCategory<LootDisplay> {
             if (t.extraText != null) {
                 lore.add("§e" + StringUtils.capitalize(t.extraText));
             }
-            return new TooltipEntryWidget(outputsArea, 0, 0, t.original, CollectionUtils.map(lore, TextComponent::new), t.output).noBackground().entries(stacks);
+            return new TooltipEntryWidget(outputsArea, 0, 0, t.original, CollectionUtils.map(lore, Component::literal), t.output).noBackground().entries(stacks);
         })));
-        widgets.add(Widgets.createLabel(new Point(bounds.getCenterX(), bounds.getMaxY() - 10), new TextComponent(display.getLocation().toString())).noShadow().color(-12566464, -4473925));
+        widgets.add(Widgets.createLabel(new Point(bounds.getCenterX(), bounds.getMaxY() - 10), Component.literal(display.getLocation().toString())).noShadow().color(-12566464, -4473925));
         registerWidget(display, widgets, bounds);
         return widgets;
     }
@@ -131,7 +126,7 @@ public class LootCategory implements DisplayCategory<LootDisplay> {
         }
 
         @Override
-        public Tooltip getCurrentTooltip(Point mouse) {
+        public Tooltip getCurrentTooltip(TooltipContext mouse) {
             return original.getTooltip(mouse);
         }
 

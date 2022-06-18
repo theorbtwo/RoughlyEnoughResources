@@ -2,7 +2,7 @@ package uk.me.desert_island.rer.mixin;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.level.StructureFeatureManager;
+import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.chunk.ChunkAccess;
@@ -21,7 +21,7 @@ import static uk.me.desert_island.rer.RoughlyEnoughResources.*;
 @Mixin(ChunkGenerator.class)
 public class MixinChunkGenerator {
     @Inject(at = @At("RETURN"), method = "applyBiomeDecoration")
-    private void generateFeatures(WorldGenLevel swa, ChunkAccess chunk, StructureFeatureManager structureAccessor, CallbackInfo ci) {
+    private void generateFeatures(WorldGenLevel swa, ChunkAccess chunk, StructureManager structureAccessor, CallbackInfo ci) {
         long startTime = System.nanoTime();
 
         ServerLevel world = swa.getLevel();

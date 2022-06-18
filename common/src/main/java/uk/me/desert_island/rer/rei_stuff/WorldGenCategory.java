@@ -11,10 +11,7 @@ import me.shedaniel.math.Rectangle;
 import me.shedaniel.rei.api.client.REIRuntime;
 import me.shedaniel.rei.api.client.gui.DisplayRenderer;
 import me.shedaniel.rei.api.client.gui.Renderer;
-import me.shedaniel.rei.api.client.gui.widgets.Button;
-import me.shedaniel.rei.api.client.gui.widgets.Tooltip;
-import me.shedaniel.rei.api.client.gui.widgets.Widget;
-import me.shedaniel.rei.api.client.gui.widgets.Widgets;
+import me.shedaniel.rei.api.client.gui.widgets.*;
 import me.shedaniel.rei.api.client.registry.display.DisplayCategory;
 import me.shedaniel.rei.api.common.category.CategoryIdentifier;
 import me.shedaniel.rei.api.common.entry.EntryIngredient;
@@ -27,8 +24,6 @@ import net.minecraft.client.gui.GuiComponent;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.core.Registry;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TextComponent;
-import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
@@ -90,7 +85,7 @@ public class WorldGenCategory implements DisplayCategory<WorldGenDisplay> {
             }
 
             @Override
-            public Tooltip getTooltip(Point mouse) {
+            public Tooltip getTooltip(TooltipContext mouse) {
                 return tooltip[0];
             }
 
@@ -104,14 +99,14 @@ public class WorldGenCategory implements DisplayCategory<WorldGenDisplay> {
                 EntryStack<?> current = getCurrent();
                 Rectangle innerBounds = new Rectangle(rectangle.x + rectangle.width / 2 - 8, rectangle.y + 3, 16, 16);
                 current.render(matrices, innerBounds, mouseX, mouseY, delta);
-                tooltip[0] = innerBounds.contains(mouseX, mouseY) ? current.getTooltip(new Point(mouseX, mouseY)) : null;
+                tooltip[0] = innerBounds.contains(mouseX, mouseY) ? current.getTooltip(TooltipContext.of(new Point(mouseX, mouseY))) : null;
             }
         };
     }
 
     @Override
     public Component getTitle() {
-        return new TranslatableComponent("rer.worldgen.category", mapAndJoinToString(world.location().getPath().split("_"), StringUtils::capitalize, " "));
+        return Component.translatable("rer.worldgen.category", mapAndJoinToString(world.location().getPath().split("_"), StringUtils::capitalize, " "));
     }
 
     public static <T> String mapAndJoinToString(T[] list, Function<T, String> function, String separator) {
@@ -216,17 +211,17 @@ public class WorldGenCategory implements DisplayCategory<WorldGenDisplay> {
                         /*endx  */ startPoint.x + 128,
                         /*endy  */ startPoint.y + Math.min((int) (graphHeight * (1 - rel_portion)), graphHeight - 1) + 1,
                         /*color */ 0xffebd534);
-                REIRuntime.getInstance().queueTooltip(Tooltip.create(new Point(mouseX, mouseY), new TextComponent("Y: " + mouseHeight), new TextComponent("Chance: " + LootDisplay.FORMAT_MORE.format(portion * 100) + "%")));
+                REIRuntime.getInstance().queueTooltip(Tooltip.create(new Point(mouseX, mouseY), Component.literal("Y: " + mouseHeight), Component.literal("Chance: " + LootDisplay.FORMAT_MORE.format(portion * 100) + "%")));
             }
         }));
         widgets.add(Widgets.createSlot(new Point(bounds.getMaxX() - (16), bounds.getMinY() + 3)).entries(display.getOutputEntries().get(0)));
-        widgets.add(Widgets.createLabel(new Point(bounds.x + 65, bounds.getMaxY() - 10), new TextComponent(Registry.BLOCK.getKey(block).toString())).noShadow().color(-12566464, -4473925));
+        widgets.add(Widgets.createLabel(new Point(bounds.x + 65, bounds.getMaxY() - 10), Component.literal(Registry.BLOCK.getKey(block).toString())).noShadow().color(-12566464, -4473925));
 
-        Button scrollLeft = Widgets.createButton(new Rectangle(bounds.getMaxX() - 16, bounds.getMinY() + 24, 16, 16), new TextComponent("←"));
+        Button scrollLeft = Widgets.createButton(new Rectangle(bounds.getMaxX() - 16, bounds.getMinY() + 24, 16, 16), Component.literal("←"));
         scrollLeft.setOnClick(button -> scroll(-50));
         widgets.add(scrollLeft);
 
-        Button scrollRight = Widgets.createButton(new Rectangle(bounds.getMaxX() - 16, bounds.getMinY() + 24 + 20, 16, 16), new TextComponent("→"));
+        Button scrollRight = Widgets.createButton(new Rectangle(bounds.getMaxX() - 16, bounds.getMinY() + 24 + 20, 16, 16), Component.literal("→"));
         scrollRight.setOnClick(button -> scroll(50));
         widgets.add(scrollRight);
 

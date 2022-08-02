@@ -137,7 +137,7 @@ public class RoughlyEnoughResources {
     private static void writeJsonPrimitive(FriendlyByteBuf buf, JsonPrimitive primitive) {
         if (primitive.isString()) {
             buf.writeByte(1);
-            buf.writeUtf(primitive.getAsString());
+            buf.writeUtf(primitive.getAsString(), Integer.MAX_VALUE);
         } else if (primitive.isBoolean()) {
             buf.writeByte(primitive.getAsBoolean() ? 3 : 2);
         } else if (primitive.isNumber()) {
@@ -210,7 +210,7 @@ public class RoughlyEnoughResources {
     private static JsonPrimitive readJsonPrimitive(int type, FriendlyByteBuf buf) {
         switch (type) {
             case 1:
-                return new JsonPrimitive(buf.readUtf());
+                return new JsonPrimitive(buf.readUtf(Integer.MAX_VALUE / 4));
             case 2:
                 return new JsonPrimitive(false);
             case 3:

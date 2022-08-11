@@ -26,7 +26,6 @@ import net.minecraft.world.level.block.LiquidBlock;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
-import uk.me.desert_island.rer.mixin.FluidBlockHooks;
 
 public class RERUtils {
     public static final L LOGGER;
@@ -124,8 +123,8 @@ public class RERUtils {
     public static EntryStack<?> fromBlockToItemStack(Block block) {
         Item item = block.asItem();
 
-        if (block instanceof LiquidBlock) {
-            return EntryStacks.of(((FluidBlockHooks) block).getFluid());
+        if (block instanceof LiquidBlock liquidBlock) {
+            return EntryStacks.of(liquidBlock.getFluidState(block.defaultBlockState()).getType());
         }
 
         if (block == Blocks.FIRE) {

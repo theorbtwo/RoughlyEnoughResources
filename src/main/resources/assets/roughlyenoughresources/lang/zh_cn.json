@@ -7,7 +7,7 @@
   "rer.condition.enchantment": "当有%s时",
   "rer.condition.item": "当有%s时",
   "rer.condition.chance": "%s%%",
-  "rer.condition.chance.looting": "当有抢夺时会增加%s%%掉落或更多",
+  "rer.condition.chance.looting": "有%s%%概率掉落,当有抢夺时会更多",
   "rer.condition.killedByPlayer": "当被玩家杀死时",
   "rer.condition.onFire": "当着火时",
   "rer.function.and": "%s+%s",

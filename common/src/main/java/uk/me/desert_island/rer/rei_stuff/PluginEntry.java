@@ -7,7 +7,7 @@ import me.shedaniel.rei.api.client.registry.display.DisplayRegistry;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
-import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityType;
@@ -42,7 +42,7 @@ public class PluginEntry implements REIClientPlugin {
 
     @Override
     public void registerDisplays(DisplayRegistry registry) {
-        for (Block block : Registry.BLOCK) {
+        for (Block block : BuiltInRegistries.BLOCK) {
             for (ResourceKey<Level> world : Minecraft.getInstance().getConnection().levels()) {
                 registry.add(new WorldGenDisplay(RERUtils.fromBlockToItemStackWithText(block), block, world));
             }
@@ -54,7 +54,7 @@ public class PluginEntry implements REIClientPlugin {
             }
         }
 
-        for (EntityType<?> entityType : Registry.ENTITY_TYPE) {
+        for (EntityType<?> entityType : BuiltInRegistries.ENTITY_TYPE) {
             ResourceLocation lootTableId = entityType.getDefaultLootTable();
 
             if (lootTableId != null && lootTableId != BuiltInLootTables.EMPTY) {
@@ -63,8 +63,7 @@ public class PluginEntry implements REIClientPlugin {
         }
 
         registry.registerVisibilityPredicate((category, display) -> {
-            if (display instanceof WorldGenDisplay) {
-                WorldGenDisplay worldGenDisplay = (WorldGenDisplay) display;
+            if (display instanceof WorldGenDisplay worldGenDisplay) {
                 WorldGenCategory worldGenCategory = (WorldGenCategory) category;
                 ClientWorldGenState state = ClientWorldGenState.byWorld(worldGenCategory.getWorld());
                 AtomicLongArray levelCount = state.levelCountsMap.get(worldGenDisplay.getOutputBlock());

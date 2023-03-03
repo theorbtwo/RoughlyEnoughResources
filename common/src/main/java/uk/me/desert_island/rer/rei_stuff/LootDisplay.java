@@ -17,7 +17,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.core.Holder;
-import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.TagParser;
 import net.minecraft.resources.ResourceLocation;
@@ -120,7 +121,7 @@ public abstract class LootDisplay implements Display {
     }
 
     public List<LootOutput> munchLootEntryItemJson(JsonObject object) {
-        Item item = Registry.ITEM.get(new ResourceLocation(object.get("name").getAsString()));
+        Item item = BuiltInRegistries.ITEM.get(new ResourceLocation(object.get("name").getAsString()));
         EntryStack<?> stack = EntryStacks.of(item);
         LootOutput output = new LootOutput();
         output.output = EntryIngredient.of(stack);
@@ -172,7 +173,7 @@ public abstract class LootDisplay implements Display {
             for (JsonElement enchantmentElement : conditionObject.get("predicate").getAsJsonObject().get("enchantments").getAsJsonArray()) {
                 JsonObject enchantmentObject = enchantmentElement.getAsJsonObject();
                 String enchantmentString = enchantmentObject.get("enchantment").getAsString();
-                Enchantment enchantment = Registry.ENCHANTMENT.get(new ResourceLocation(enchantmentString));
+                Enchantment enchantment = BuiltInRegistries.ENCHANTMENT.get(new ResourceLocation(enchantmentString));
                 if (enchantment != null) {
                     for (LootOutput output : outputs) {
                         output.addExtraText(I18n.get("rer.condition.enchantment", I18n.get(enchantment.getDescriptionId()).toLowerCase()));
@@ -191,7 +192,7 @@ public abstract class LootDisplay implements Display {
             }
         } else if (kind.equals("minecraft:match_tool") && conditionObject.has("predicate") && conditionObject.get("predicate").getAsJsonObject().has("item")) {
             String itemId = conditionObject.get("predicate").getAsJsonObject().get("item").getAsString();
-            Item item = Registry.ITEM.get(new ResourceLocation(itemId));
+            Item item = BuiltInRegistries.ITEM.get(new ResourceLocation(itemId));
             for (LootOutput output : outputs) {
                 output.addExtraText(I18n.get("rer.condition.item", item.getDescription().getString().toLowerCase()));
             }
@@ -227,9 +228,9 @@ public abstract class LootDisplay implements Display {
                     outputs.addAll(munchLootSupplierJson(json));
                 break;
             case "minecraft:tag":
-                TagKey<Item> tag = TagKey.create(Registry.ITEM_REGISTRY, new ResourceLocation(object.get("name").getAsString()));
+                TagKey<Item> tag = TagKey.create(Registries.ITEM, new ResourceLocation(object.get("name").getAsString()));
                 if (tag != null)
-                    outputs.addAll(StreamSupport.stream(Registry.ITEM.getTagOrEmpty(tag).spliterator(), false).map(Holder::value).map(item -> {
+                    outputs.addAll(StreamSupport.stream(BuiltInRegistries.ITEM.getTagOrEmpty(tag).spliterator(), false).map(Holder::value).map(item -> {
                         EntryStack<?> stack = EntryStacks.of(item);
                         LootOutput output = new LootOutput();
                         output.output = EntryIngredient.of(stack);
@@ -373,7 +374,7 @@ public abstract class LootDisplay implements Display {
             }
         } else if (kind.equals("minecraft:apply_bonus") && functionObject.has("enchantment")) {
             String enchantmentString = functionObject.get("enchantment").getAsString();
-            Enchantment enchantment = Registry.ENCHANTMENT.get(new ResourceLocation(enchantmentString));
+            Enchantment enchantment = BuiltInRegistries.ENCHANTMENT.get(new ResourceLocation(enchantmentString));
             if (enchantment != null) {
                 for (LootOutput output : outputs) {
                     output.addExtraTextCount(I18n.get("rer.function.bonus.enchant", I18n.get(enchantment.getDescriptionId()).toLowerCase()));

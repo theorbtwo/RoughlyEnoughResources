@@ -5,7 +5,7 @@ import dev.architectury.networking.NetworkManager;
 import io.netty.buffer.CompositeByteBuf;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.core.Registry;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -36,7 +36,7 @@ public class RoughlyEnoughResourcesClient {
             RERUtils.LOGGER.debug("got SEND_WORLD_GEN_STATE_DONE");
             FriendlyByteBuf buf = new FriendlyByteBuf(world_state_buf);
             ResourceLocation worldId = buf.readResourceLocation();
-            ResourceKey<Level> world = ResourceKey.create(Registry.DIMENSION_REGISTRY, worldId);
+            ResourceKey<Level> world = ResourceKey.create(Registries.DIMENSION, worldId);
             if (world == null) {
                 RERUtils.LOGGER.error("Found unregistered dimension type %s, do the server and client have the same dimensions?", worldId.toString());
                 return;

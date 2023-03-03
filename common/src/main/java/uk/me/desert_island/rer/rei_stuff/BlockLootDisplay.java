@@ -2,7 +2,7 @@ package uk.me.desert_island.rer.rei_stuff;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
@@ -30,6 +30,6 @@ public class BlockLootDisplay extends LootDisplay {
 
     @Override
     public ResourceLocation getLocation() {
-        return Registry.BLOCK.getKey(inputBlock);
+        return BuiltInRegistries.BLOCK.getKey(inputBlock);
     }
 }

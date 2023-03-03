@@ -2,7 +2,7 @@ package uk.me.desert_island.rer.client;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
@@ -58,13 +58,13 @@ public class ClientWorldGenState {
             levelCountsMap.clear();
             while (buf.isReadable()) {
                 int blockId = buf.readVarInt();
-                Block block = Registry.BLOCK.byId(blockId);
+                Block block = BuiltInRegistries.BLOCK.byId(blockId);
                 levelCountsMap.put(block, new AtomicLongArray(readVarLongArray(buf)));
             }
         } else {
             while (buf.isReadable()) {
                 int blockId = buf.readVarInt();
-                Block block = Registry.BLOCK.byId(blockId);
+                Block block = BuiltInRegistries.BLOCK.byId(blockId);
                 AtomicLongArray levelCount = levelCountsMap.get(block);
                 if (levelCount == null) {
                     levelCountsMap.put(block, new AtomicLongArray(readVarLongArray(buf)));

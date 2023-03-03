@@ -5,7 +5,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
-import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
@@ -61,7 +61,7 @@ public class WorldGenState extends SavedData {
     public void markPlayerDirty(Block block) {
         lockPlayerDirty();
         this.playerDirty.add(-1);
-        this.playerDirty.add(Registry.BLOCK.getId(block));
+        this.playerDirty.add(BuiltInRegistries.BLOCK.getId(block));
         unlockPlayerDirty();
     }
 
@@ -134,7 +134,7 @@ public class WorldGenState extends SavedData {
 
         CompoundTag levelCountsForBlock = root.getCompound("level_counts_for_block");
         for (String blockIdString : levelCountsForBlock.getAllKeys()) {
-            Block block = Registry.BLOCK.get(new ResourceLocation(blockIdString));
+            Block block = BuiltInRegistries.BLOCK.get(new ResourceLocation(blockIdString));
             levelCountsMap.put(block, new AtomicLongArray(WORLD_HEIGHT));
             AtomicLongArray levelCount = levelCountsMap.get(block);
             long[] countsForBlockTag = levelCountsForBlock.getLongArray(blockIdString);
@@ -161,7 +161,7 @@ public class WorldGenState extends SavedData {
             for (int i = 0; i < countsForBlockTag.length; i++) {
                 countsForBlockTag[i] = countsForBlockMap.get(i);
             }
-            tag.putLongArray(Registry.BLOCK.getKey(block).toString(), countsForBlockTag);
+            tag.putLongArray(BuiltInRegistries.BLOCK.getKey(block).toString(), countsForBlockTag);
         }
         rootTag.put("level_counts_for_block", tag);
 
@@ -188,7 +188,7 @@ public class WorldGenState extends SavedData {
             allLevels.remove(-1);
         }
         for (int level : allLevels) {
-            Block block = Registry.BLOCK.byId(level);
+            Block block = BuiltInRegistries.BLOCK.byId(level);
             AtomicLongArray countsForBlockMap = levelCountsMap.get(block);
 
             if (countsForBlockMap != null) {
@@ -209,7 +209,7 @@ public class WorldGenState extends SavedData {
         IntSet levels = new IntOpenHashSet();
         levels.add(-1);
         for (Block block : levelCountsMap.keySet()) {
-            levels.add(Registry.BLOCK.getId(block));
+            levels.add(BuiltInRegistries.BLOCK.getId(block));
         }
         return levels;
     }

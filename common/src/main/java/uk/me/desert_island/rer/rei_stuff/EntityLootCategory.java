@@ -1,7 +1,5 @@
 package uk.me.desert_island.rer.rei_stuff;
 
-import com.mojang.math.Quaternion;
-import com.mojang.math.Vector3f;
 import me.shedaniel.clothconfig2.api.ScissorsHandler;
 import me.shedaniel.math.Point;
 import me.shedaniel.math.Rectangle;
@@ -14,10 +12,11 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.Items;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
 import uk.me.desert_island.rer.RERUtils;
 
 import java.util.List;
@@ -72,8 +71,14 @@ public class EntityLootCategory extends LootCategory {
             matrices.scale(1, 1, -1);
             matrices.translate(0.0D, 0.0D, 1000.0D);
             matrices.scale(size, size, size);
-            Quaternion quaternion = Vector3f.ZP.rotationDegrees(180.0F);
-            Quaternion quaternion2 = Vector3f.XP.rotationDegrees(g * 20.0F);
+            // ZP = new Vector3f(0.0F, 0.0F, 1.0F)
+            // XP = new Vector3f(1.0F, 0.0F, 0.0F);
+            Quaternionf ZP = new Quaternionf().rotateAxis(180.0F * 0.017453292F, new Vector3f(0.0F, 0.0F, 1.0F));
+            Quaternionf XP = new Quaternionf().rotateAxis(g * 20.0F * 0.017453292F, new Vector3f(1.0F, 0.0F, 0.0F));
+            //Quaternionf quaternion = Vector3f.ZP.rotationDegrees(180.0F);
+            //Quaternionf quaternion2 = Vector3f.XP.rotationDegrees(g * 20.0F);
+            Quaternionf quaternion = ZP;
+            Quaternionf quaternion2 = XP;
             quaternion.mul(quaternion2);
             matrices.mulPose(quaternion);
             float i = entity.getYRot();
@@ -92,7 +97,7 @@ public class EntityLootCategory extends LootCategory {
             }
 
             EntityRenderDispatcher entityRenderDispatcher = Minecraft.getInstance().getEntityRenderDispatcher();
-            quaternion2.conj();
+            quaternion2.conjugate();
             entityRenderDispatcher.overrideCameraOrientation(quaternion2);
             entityRenderDispatcher.setRenderShadow(false);
             MultiBufferSource.BufferSource immediate = Minecraft.getInstance().renderBuffers().bufferSource();

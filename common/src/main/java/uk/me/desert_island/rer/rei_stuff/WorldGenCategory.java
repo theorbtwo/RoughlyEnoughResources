@@ -22,7 +22,7 @@ import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiComponent;
 import net.minecraft.client.gui.components.events.GuiEventListener;
-import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.util.Mth;
@@ -47,7 +47,7 @@ public class WorldGenCategory implements DisplayCategory<WorldGenDisplay> {
 
     static final Map<ResourceKey<Level>, CategoryIdentifier<?>> WORLD_IDENTIFIER_MAP = Maps.newHashMap();
     private final ResourceKey<Level> world;
-    private ValueAnimator<Double> scroll = ValueAnimator.ofDouble();
+    private final ValueAnimator<Double> scroll = ValueAnimator.ofDouble();
 
     public WorldGenCategory(ResourceKey<Level> world) {
         WORLD_IDENTIFIER_MAP.put(world, CategoryIdentifier.of("roughlyenoughresources", world.location().getPath() + "_worldgen_category"));
@@ -215,7 +215,7 @@ public class WorldGenCategory implements DisplayCategory<WorldGenDisplay> {
             }
         }));
         widgets.add(Widgets.createSlot(new Point(bounds.getMaxX() - (16), bounds.getMinY() + 3)).entries(display.getOutputEntries().get(0)));
-        widgets.add(Widgets.createLabel(new Point(bounds.x + 65, bounds.getMaxY() - 10), Component.literal(Registry.BLOCK.getKey(block).toString())).noShadow().color(-12566464, -4473925));
+        widgets.add(Widgets.createLabel(new Point(bounds.x + 65, bounds.getMaxY() - 10), Component.literal(BuiltInRegistries.BLOCK.getKey(block).toString())).noShadow().color(-12566464, -4473925));
 
         Button scrollLeft = Widgets.createButton(new Rectangle(bounds.getMaxX() - 16, bounds.getMinY() + 24, 16, 16), Component.literal("←"));
         scrollLeft.setOnClick(button -> scroll(-50));

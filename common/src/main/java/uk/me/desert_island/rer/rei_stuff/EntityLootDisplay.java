@@ -4,7 +4,7 @@ import me.shedaniel.rei.api.common.category.CategoryIdentifier;
 import me.shedaniel.rei.api.common.util.EntryStacks;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.SpawnEggItem;
@@ -28,7 +28,7 @@ public class EntityLootDisplay extends LootDisplay {
 
     @Override
     public ResourceLocation getLocation() {
-        return Registry.ENTITY_TYPE.getKey(inputEntity);
+        return BuiltInRegistries.ENTITY_TYPE.getKey(inputEntity);
     }
 
     @Override
